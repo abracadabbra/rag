@@ -1,9 +1,8 @@
 <template>
-  <RiskRulesQA />
+  <router-view />
 </template>
 
 <script setup>
-import RiskRulesQA from './views/RiskRulesQA.vue'
 </script>
 
 <style>
@@ -17,5 +16,9 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   background: #f0f2f5;
   color: #333;
+}
+
+a {
+  text-decoration: none;
 }
 </style>
