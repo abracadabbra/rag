@@ -5,15 +5,22 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { marked } from 'marked'
 
 const props = defineProps({
   answer: {
     type: String,
     required: true
+  },
+  streaming: {
+    type: Boolean,
+    default: true
   }
 })
+
+const displayedText = ref('')
+const isTyping = ref(false)
 
 marked.setOptions({
   breaks: true,
@@ -21,8 +28,38 @@ marked.setOptions({
 })
 
 const renderedAnswer = computed(() => {
-  return marked.parse(props.answer)
+  return marked.parse(displayedText.value)
 })
+
+const startTypewriter = (text) => {
+  if (!props.streaming) {
+    displayedText.value = text
+    return
+  }
+
+  displayedText.value = ''
+  isTyping.value = true
+  let index = 0
+  const speed = 20
+
+  const type = () => {
+    if (index < text.length) {
+      displayedText.value = text.substring(0, index + 1)
+      index++
+      setTimeout(type, speed)
+    } else {
+      isTyping.value = false
+    }
+  }
+
+  type()
+}
+
+watch(() => props.answer, (newAnswer) => {
+  startTypewriter(newAnswer)
+}, { immediate: true })
+
+defineExpose({ isTyping })
 </script>
 
 <style scoped>

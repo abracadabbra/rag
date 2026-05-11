@@ -2,6 +2,11 @@
   <div class="risk-rules-qa">
     <div class="header">
       <div class="header-left">
+        <router-link to="/" class="back-btn">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"/>
+          </svg>
+        </router-link>
         <div class="logo">
           <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
             <rect width="32" height="32" rx="8" fill="#1890ff"/>
@@ -9,8 +14,8 @@
           </svg>
         </div>
         <div class="title-group">
-          <h1>风控规则智能问答</h1>
-          <span class="subtitle">基于 RAG 的风控规则检索系统</span>
+          <h1>风控规则问答</h1>
+          <span class="subtitle">智能检索风控政策与规则</span>
         </div>
       </div>
       <button @click="resetSession" class="new-chat-btn">
@@ -33,55 +38,44 @@
     </div>
 
     <div class="messages" ref="messagesContainer">
-      <!-- Welcome message -->
       <div v-if="messages.length === 0" class="welcome">
         <div class="welcome-icon">
-          <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-            <circle cx="32" cy="32" r="30" stroke="#e8e8e8" stroke-width="2"/>
-            <path d="M20 32h24M32 20v24" stroke="#1890ff" stroke-width="3" stroke-linecap="round"/>
+          <svg width="72" height="72" viewBox="0 0 72 72" fill="none">
+            <circle cx="36" cy="36" r="34" stroke="#e8e8e8" stroke-width="2"/>
+            <path d="M22 36h28M36 22v28" stroke="#1890ff" stroke-width="3" stroke-linecap="round"/>
           </svg>
         </div>
-        <h2>欢迎使用风控规则问答系统</h2>
-        <p>输入您的问题，我可以帮您检索相关风控规则</p>
+        <h2>欢迎使用风控规则问答</h2>
+        <p>我可以帮您查询风控政策、制度与各类规则信息</p>
         <div class="suggestions">
-          <button
-            v-for="q in suggestions"
-            :key="q"
-            @click="handleSend(q)"
-            class="suggestion-btn"
-          >
+          <button v-for="q in suggestions" :key="q" @click="handleSend(q)" class="suggestion-btn">
             {{ q }}
           </button>
         </div>
       </div>
 
-      <!-- Chat messages -->
-      <div
-        v-for="(msg, index) in messages"
-        :key="index"
-        class="message-wrapper"
-        :class="msg.role"
-      >
-        <div class="avatar">
-          <div v-if="msg.role === 'user'" class="user-avatar">U</div>
-          <div v-else class="ai-avatar">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="white">
-              <path d="M10 2L3 7v11h14V7l-7-5zm0 2.5L14.5 7H5.5L10 4.5z"/>
-            </svg>
+      <TransitionGroup name="message" tag="div" class="messages-list">
+        <div v-for="(msg, index) in messages" :key="index" class="message-wrapper" :class="msg.role">
+          <div class="avatar">
+            <div v-if="msg.role === 'user'" class="user-avatar">U</div>
+            <div v-else class="ai-avatar">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="white">
+                <path d="M10 2L3 7v11h14V7l-7-5zm0 2.5L14.5 7H5.5L10 4.5z"/>
+              </svg>
+            </div>
+          </div>
+          <div class="message-content">
+            <div v-if="msg.role === 'user'" class="user-bubble">
+              {{ msg.content }}
+            </div>
+            <template v-else>
+              <AnswerDisplay :answer="msg.answer" />
+              <SourceList :sources="msg.sources" />
+            </template>
           </div>
         </div>
-        <div class="message-content">
-          <div v-if="msg.role === 'user'" class="user-bubble">
-            {{ msg.content }}
-          </div>
-          <template v-else>
-            <AnswerDisplay :answer="msg.answer" />
-            <SourceList :sources="msg.sources" />
-          </template>
-        </div>
-      </div>
+      </TransitionGroup>
 
-      <!-- Clarification options -->
       <div v-if="clarificationOptions.length > 0" class="message-wrapper assistant">
         <div class="avatar">
           <div class="ai-avatar">
@@ -91,14 +85,10 @@
           </div>
         </div>
         <div class="message-content">
-          <ClarificationOptions
-            :options="clarificationOptions"
-            @select="handleClarificationSelect"
-          />
+          <ClarificationOptions :options="clarificationOptions" @select="handleClarificationSelect" />
         </div>
       </div>
 
-      <!-- Loading state -->
       <div v-if="loading" class="message-wrapper assistant">
         <div class="avatar">
           <div class="ai-avatar">
@@ -116,7 +106,6 @@
         </div>
       </div>
 
-      <!-- Error state -->
       <div v-if="error" class="error-banner">
         <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
           <path d="M10 0C4.48 0 0 4.48 0 10s4.48 10 10 10 10-4.48 10-10S15.52 0 10 0zm1 15H9v-2h2v2zm0-4H9V5h2v6z"/>
@@ -150,16 +139,16 @@ const messagesContainer = ref(null)
 const suggestions = [
   '白金卡的单笔交易限额是多少？',
   '信用卡取现的手续费怎么计算？',
-  '哪些情况下交易会被风控拦截？'
+  '哪些情况下交易会被风控拦截？',
 ]
 
 onMounted(async () => {
   try {
     await checkHealth()
     apiConnected.value = true
-  } catch (e) {
+  } catch {
     apiConnected.value = false
-    error.value = '无法连接到 API 服务，请确保后端已启动 (python -m api.main)'
+    error.value = '无法连接到 API 服务，请确保后端已启动'
   }
 })
 
@@ -245,28 +234,47 @@ const resetSession = () => {
 
 <style scoped>
 .risk-rules-qa {
-  max-width: 900px;
+  max-width: 1000px;
   margin: 0 auto;
   padding: 0;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #f5f7fa;
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
-  background: white;
-  border-bottom: 1px solid #e8e8e8;
+  padding: 20px 32px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  color: #666;
+  transition: all 0.2s;
+}
+
+.back-btn:hover {
+  background: #f5f5f5;
+  color: #333;
 }
 
 .logo {
@@ -274,7 +282,7 @@ const resetSession = () => {
 }
 
 .title-group h1 {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
   color: #1a1a1a;
   margin: 0;
@@ -289,10 +297,10 @@ const resetSession = () => {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 10px 16px;
+  padding: 10px 18px;
   background: white;
-  border: 1px solid #d9d9d9;
-  border-radius: 8px;
+  border: 1px solid #e8e8e8;
+  border-radius: 10px;
   cursor: pointer;
   font-size: 14px;
   color: #333;
@@ -308,9 +316,8 @@ const resetSession = () => {
   display: flex;
   align-items: center;
   gap: 24px;
-  padding: 12px 24px;
-  background: #fafafa;
-  border-bottom: 1px solid #e8e8e8;
+  padding: 12px 32px;
+  background: rgba(255, 255, 255, 0.5);
   font-size: 13px;
 }
 
@@ -334,6 +341,12 @@ const resetSession = () => {
 
 .status-item.connected .status-dot {
   background: #52c41a;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
 .session-label {
@@ -342,23 +355,29 @@ const resetSession = () => {
 
 .session-id {
   font-family: monospace;
-  background: #f0f0f0;
-  padding: 2px 6px;
+  background: #f5f5f5;
+  padding: 2px 8px;
   border-radius: 4px;
 }
 
 .messages {
   flex: 1;
   overflow-y: auto;
-  padding: 24px;
+  padding: 32px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+}
+
+.messages-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .welcome {
   text-align: center;
-  padding: 60px 20px;
+  padding: 80px 20px;
+  animation: fadeIn 0.5s ease;
 }
 
 .welcome-icon {
@@ -373,7 +392,7 @@ const resetSession = () => {
 
 .welcome p {
   font-size: 15px;
-  color: #8c8c8c;
+  color: #666;
   margin: 0 0 32px 0;
 }
 
@@ -385,10 +404,10 @@ const resetSession = () => {
 }
 
 .suggestion-btn {
-  padding: 10px 20px;
+  padding: 12px 24px;
   background: white;
   border: 1px solid #e8e8e8;
-  border-radius: 20px;
+  border-radius: 24px;
   font-size: 14px;
   color: #333;
   cursor: pointer;
@@ -398,16 +417,18 @@ const resetSession = () => {
 .suggestion-btn:hover {
   border-color: #1890ff;
   color: #1890ff;
+  transform: translateY(-2px);
 }
 
 .message-wrapper {
   display: flex;
   gap: 12px;
-  max-width: 100%;
+  max-width: 85%;
 }
 
 .message-wrapper.user {
   flex-direction: row-reverse;
+  margin-left: auto;
 }
 
 .avatar {
@@ -433,26 +454,28 @@ const resetSession = () => {
 
 .ai-avatar {
   background: linear-gradient(135deg, #1890ff 0%, #0050b3 100%);
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
 }
 
 .message-content {
-  max-width: 75%;
+  max-width: 100%;
 }
 
 .user-bubble {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  padding: 12px 16px;
-  border-radius: 18px 18px 4px 18px;
+  padding: 14px 18px;
+  border-radius: 20px 20px 6px 20px;
   font-size: 15px;
   line-height: 1.5;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
 .loading-bubble {
   background: white;
-  padding: 16px 24px;
-  border-radius: 18px 18px 18px 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 18px 28px;
+  border-radius: 20px 20px 20px 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 .loading-dots {
@@ -476,21 +499,65 @@ const resetSession = () => {
   40% { transform: scale(1); }
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 消息过渡动画 */
+.message-enter-active {
+  animation: slideIn 0.3s ease;
+}
+
+.message-leave-active {
+  animation: slideOut 0.2s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
 .error-banner {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 16px;
+  padding: 14px 18px;
   background: #fff2f0;
   border: 1px solid #ffccc7;
-  border-radius: 8px;
+  border-radius: 12px;
   color: #ff4d4f;
   font-size: 14px;
+  animation: shake 0.5s ease;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
 }
 
 .input-area {
-  padding: 16px 24px 24px;
-  background: white;
-  border-top: 1px solid #e8e8e8;
+  padding: 20px 32px 28px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
 }
 </style>
