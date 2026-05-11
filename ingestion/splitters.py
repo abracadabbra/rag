@@ -5,6 +5,9 @@
 from typing import List, Dict, Any
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from api.config import settings
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class TextSplitter:
@@ -47,9 +50,7 @@ class TextSplitter:
             length_function=len
         )
 
-        print(f"✅ 文本分块器初始化完成")
-        print(f"   块大小: {self.chunk_size}")
-        print(f"   重叠: {self.chunk_overlap}")
+        logger.info(f"文本分块器初始化完成 - 块大小: {self.chunk_size}, 重叠: {self.chunk_overlap}")
 
     def split_text(self, text: str) -> List[str]:
         """
@@ -110,27 +111,11 @@ def split_documents(documents: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
 
 
 if __name__ == "__main__":
-    # 测试
-    print("测试文本分块...")
-
-    text = """
-# 信用卡交易限额规则
-
-## 白金卡
-- 单笔限额：50,000 元
-- 日累计限额：200,000 元
-
-## 金卡
-- 单笔限额：20,000 元
-- 日累计限额：80,000 元
-
-## 普卡
-- 单笔限额：5,000 元
-- 日累计限额：20,000 元
-    """ * 10  # 重复10次，制造长文本
-
-    chunks = split_text(text)
-    print(f"✅ 文本分块完成")
-    print(f"   原始长度: {len(text)} 字符")
-    print(f"   块数量: {len(chunks)}")
-    print(f"   第一块长度: {len(chunks[0])} 字符")
+    import sys
+    if len(sys.argv) > 1:
+        # 命令行测试
+        file_path = sys.argv[1]
+        from ingestion.loaders import load_document
+        doc = load_document(file_path)
+        chunks = split_documents([doc])
+        logger.info(f"分块完成 - 原始长度: {len(doc['content'])} 字符, 块数量: {len(chunks)}")

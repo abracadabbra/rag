@@ -6,6 +6,9 @@
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 import yaml
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class DocumentLoader:
@@ -39,7 +42,7 @@ class DocumentLoader:
                 doc = self.load(file_path)
                 documents.append(doc)
             except Exception as e:
-                print(f"❌ 加载失败: {file_path}, 错误: {e}")
+                logger.error(f"加载失败: {file_path}, 错误: {e}")
         return documents
 
 
@@ -92,7 +95,7 @@ class MarkdownLoader(DocumentLoader):
             return metadata if isinstance(metadata, dict) else {}
 
         except Exception as e:
-            print(f"⚠️  解析 frontmatter 失败: {e}")
+            logger.warning(f"解析 frontmatter 失败: {e}")
             return {}
 
     def _remove_frontmatter(self, content: str) -> str:
@@ -250,9 +253,11 @@ def load_documents(file_paths: List[str]) -> List[Dict[str, Any]]:
         try:
             doc = load_document(file_path)
             documents.append(doc)
-            print(f"✅ 加载成功: {file_path}")
+            logger.info(f"加载成功: {file_path}")
+        except FileNotFoundError:
+            logger.error(f"文件不存在: {file_path}")
         except Exception as e:
-            print(f"❌ 加载失败: {file_path}, 错误: {e}")
+            logger.error(f"加载失败: {file_path}, 错误: {e}")
 
     return documents
 
