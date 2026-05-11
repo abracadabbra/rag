@@ -29,7 +29,7 @@
         <p>查询模型部署、特征、场景信息</p>
       </router-link>
 
-      <div class="scene-card disabled">
+      <router-link to="/simulation" class="scene-card">
         <div class="scene-icon simulation">
           <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
             <rect width="48" height="48" rx="12" fill="#fa8c16"/>
@@ -38,10 +38,10 @@
           </svg>
         </div>
         <h2>仿真解读</h2>
-        <p>即将上线</p>
-      </div>
+        <p>解读仿真结果、分析模型表现</p>
+      </router-link>
 
-      <div class="scene-card disabled">
+      <router-link to="/profit" class="scene-card">
         <div class="scene-icon profit">
           <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
             <rect width="48" height="48" rx="12" fill="#52c41a"/>
@@ -49,8 +49,8 @@
           </svg>
         </div>
         <h2>毛利抽成查询</h2>
-        <p>即将上线</p>
-      </div>
+        <p>查询分成比例、结算规则、收益分析</p>
+      </router-link>
     </div>
   </div>
 </template>

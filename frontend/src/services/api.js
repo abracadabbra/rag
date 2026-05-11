@@ -83,6 +83,50 @@ export async function queryModelCards({
 }
 
 /**
+ * 发送仿真解读查询
+ */
+export async function querySimulation({
+  query,
+  session_id = null,
+  top_k = 5,
+  score_threshold = 0.7,
+  clarification_choice = null
+}) {
+  const response = await fetch(`${API_BASE}/simulation/query`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query, session_id, top_k, score_threshold, clarification_choice })
+  })
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: '请求失败' }))
+    throw new Error(error.detail || `HTTP ${response.status}`)
+  }
+  return response.json()
+}
+
+/**
+ * 发送毛利抽成查询
+ */
+export async function queryProfit({
+  query,
+  session_id = null,
+  top_k = 5,
+  score_threshold = 0.7,
+  clarification_choice = null
+}) {
+  const response = await fetch(`${API_BASE}/profit/query`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query, session_id, top_k, score_threshold, clarification_choice })
+  })
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: '请求失败' }))
+    throw new Error(error.detail || `HTTP ${response.status}`)
+  }
+  return response.json()
+}
+
+/**
  * 检查 API 健康状态
  * @returns {Promise<Object>} 健康状态
  */
