@@ -1,0 +1,21 @@
+<template>
+  <RiskRulesQA />
+</template>
+
+<script setup>
+import RiskRulesQA from './views/RiskRulesQA.vue'
+</script>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: #f0f2f5;
+  color: #333;
+}
+</style>
