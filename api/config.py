@@ -41,6 +41,12 @@ class Settings(BaseSettings):
     redis_session_ttl: int = 1800  # 30分钟
 
     # ==================== LLM 配置 ====================
+    # MiniMax (通过 aicodee 代理)
+    minimax_api_key: str = ""
+    minimax_api_base: str = "https://v2.aicodee.com/v1"
+    minimax_model: str = "MiniMax-M2.7-highspeed"
+
+    # OpenAI (备选)
     openai_api_key: str = ""
     openai_api_base: str = "https://api.openai.com/v1"
     openai_model: str = "gpt-4-turbo-preview"
@@ -51,6 +57,9 @@ class Settings(BaseSettings):
     local_llm_enabled: bool = False
     local_llm_base_url: str = "http://localhost:11434"
     local_llm_model: str = "qwen2.5:72b"
+
+    # 当前使用的 LLM Provider: minimax / openai / local
+    llm_provider: str = "minimax"
 
     # ==================== Embedding 配置 ====================
     embedding_model: str = "BAAI/bge-m3"
@@ -74,6 +83,9 @@ class Settings(BaseSettings):
     # ==================== 缓存配置 ====================
     cache_enabled: bool = True
     cache_ttl: int = 3600  # 1 小时
+
+    # ==================== 开发配置 ====================
+    use_mock_data: bool = False
 
     # ==================== 日志配置 ====================
     log_level: str = "INFO"

@@ -39,13 +39,30 @@ class RAGService:
             raise ConnectionError(f"无法连接到 Milvus: {e}")
 
         try:
-            # 初始化 LLM
-            self.llm_client = OpenAI(
-                api_key=settings.openai_api_key,
-                base_url=settings.openai_api_base
-            )
-
-            logger.info(f"LLM 客户端初始化成功 - Model: {settings.openai_model}")
+            # 初始化 LLM（根据配置的 provider）
+            if settings.llm_provider == "minimax":
+                self.llm_client = OpenAI(
+                    api_key=settings.minimax_api_key,
+                    base_url=settings.minimax_api_base
+                )
+                self.llm_model = settings.minimax_model
+                logger.info(f"MiniMax LLM 客户端初始化 - Model: {self.llm_model}")
+            elif settings.llm_provider == "openai":
+                self.llm_client = OpenAI(
+                    api_key=settings.openai_api_key,
+                    base_url=settings.openai_api_base
+                )
+                self.llm_model = settings.openai_model
+                logger.info(f"OpenAI LLM 客户端初始化 - Model: {self.llm_model}")
+            elif settings.llm_provider == "local":
+                self.llm_client = OpenAI(
+                    api_key="dummy",  # 本地模型不需要真实 key
+                    base_url=settings.local_llm_base_url
+                )
+                self.llm_model = settings.local_llm_model
+                logger.info(f"本地 LLM 客户端初始化 - Model: {self.llm_model}")
+            else:
+                raise ValueError(f"未知的 LLM Provider: {settings.llm_provider}")
         except Exception as e:
             logger.error(f"LLM 客户端初始化失败: {e}", exc_info=True)
             raise ConnectionError(f"无法初始化 LLM 客户端: {e}")
@@ -55,11 +72,12 @@ class RAGService:
 
         print(f"✅ RAG 服务初始化完成")
         print(f"   Milvus Collection: {settings.milvus_collection}")
-        print(f"   LLM Model: {settings.openai_model}")
+        print(f"   LLM Provider: {settings.llm_provider}")
+        print(f"   LLM Model: {self.llm_model}")
         print(f"   Cache Enabled: {settings.cache_enabled}")
         logger.info(
             f"RAG 服务初始化完成 - Collection: {settings.milvus_collection}, "
-            f"Model: {settings.openai_model}, Cache: {settings.cache_enabled}"
+            f"Provider: {settings.llm_provider}, Model: {self.llm_model}, Cache: {settings.cache_enabled}"
         )
 
     def query(
@@ -232,7 +250,7 @@ class RAGService:
         """调用 LLM 生成答案"""
         try:
             response = self.llm_client.chat.completions.create(
-                model=settings.openai_model,
+                model=self.llm_model,
                 messages=[
                     {"role": "system", "content": "你是一个专业的问答助手。"},
                     {"role": "user", "content": prompt}
