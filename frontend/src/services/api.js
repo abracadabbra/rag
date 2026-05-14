@@ -5,6 +5,47 @@
 const API_BASE = '/api/v1'
 
 /**
+ * 会话管理
+ */
+export async function listSessions(limit = 50, offset = 0) {
+  const response = await fetch(`${API_BASE}/sessions?limit=${limit}&offset=${offset}`)
+  if (!response.ok) throw new Error('获取会话列表失败')
+  return response.json()
+}
+
+export async function createSession(sessionId = null, sceneType = null) {
+  const response = await fetch(`${API_BASE}/sessions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ session_id: sessionId, scene_type: sceneType })
+  })
+  if (!response.ok) throw new Error('创建会话失败')
+  return response.json()
+}
+
+export async function deleteSession(sessionId) {
+  const response = await fetch(`${API_BASE}/sessions/${sessionId}`, { method: 'DELETE' })
+  if (!response.ok) throw new Error('删除会话失败')
+  return response.json()
+}
+
+export async function getSession(sessionId) {
+  const response = await fetch(`${API_BASE}/sessions/${sessionId}`)
+  if (!response.ok) throw new Error('获取会话失败')
+  return response.json()
+}
+
+export async function updateSessionTitle(sessionId, title) {
+  const response = await fetch(`${API_BASE}/sessions/${sessionId}/title`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title })
+  })
+  if (!response.ok) throw new Error('更新标题失败')
+  return response.json()
+}
+
+/**
  * 发送风控规则查询
  * @param {Object} params - 查询参数
  * @param {string} params.query - 用户问题

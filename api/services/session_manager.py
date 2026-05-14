@@ -36,8 +36,20 @@ class SessionState(BaseModel):
     updated_at: str
 
 
+class SessionSummary(BaseModel):
+    """会话摘要"""
+    session_id: str
+    title: str = ""
+    message_count: int = 0
+    created_at: str
+    updated_at: str
+    scene_type: Optional[str] = None
+
+
 class SessionManager:
     """会话管理器"""
+
+    SESSIONS_INDEX_KEY = "sessions:index"
 
     def __init__(
         self,
@@ -76,6 +88,7 @@ class SessionManager:
         )
 
         self._save_state(session_id, state)
+        self._add_to_index(session_id, state)
         logger.info(f"创建新会话 - session_id: {session_id}")
 
         return session_id
@@ -249,6 +262,89 @@ class SessionManager:
     def _get_key(self, session_id: str) -> str:
         """生成 Redis key"""
         return f"session:{session_id}"
+
+    def _add_to_index(self, session_id: str, state: SessionState):
+        """将会话添加到索引"""
+        summary = SessionSummary(
+            session_id=session_id,
+            title=state.metadata.get("title", "") or self._generate_title(state),
+            message_count=len(state.messages),
+            created_at=state.created_at,
+            updated_at=state.updated_at,
+            scene_type=state.metadata.get("scene_type")
+        )
+        self.redis_client.hset(self.SESSIONS_INDEX_KEY, session_id, summary.model_dump_json())
+        self.redis_client.expire(self.SESSIONS_INDEX_KEY, self.ttl)
+
+    def _remove_from_index(self, session_id: str):
+        """从索引中移除会话"""
+        self.redis_client.hdel(self.SESSIONS_INDEX_KEY, session_id)
+
+    def _generate_title(self, state: SessionState) -> str:
+        """生成会话标题（基于第一条用户消息）"""
+        for msg in state.messages:
+            if msg.role == "user":
+                return msg.content[:50] + ("..." if len(msg.content) > 50 else "")
+        return "新会话"
+
+    def list_sessions(self, limit: int = 50, offset: int = 0) -> List[SessionSummary]:
+        """
+        获取会话列表
+
+        Args:
+            limit: 返回数量限制
+            offset: 偏移量
+
+        Returns:
+            会话摘要列表
+        """
+        all_sessions = self.redis_client.hgetall(self.SESSIONS_INDEX_KEY)
+
+        sessions = []
+        for session_id, data in all_sessions.items():
+            try:
+                summary = SessionSummary.model_validate_json(data)
+                sessions.append(summary)
+            except Exception as e:
+                logger.warning(f"解析会话摘要失败: {session_id}, {e}")
+
+        # 按 updated_at 倒序
+        sessions.sort(key=lambda x: x.updated_at, reverse=True)
+
+        return sessions[offset:offset + limit]
+
+    def delete_session(self, session_id: str) -> bool:
+        """
+        删除会话
+
+        Args:
+            session_id: 会话 ID
+
+        Returns:
+            是否成功
+        """
+        key = self._get_key(session_id)
+        result = self.redis_client.delete(key)
+        self._remove_from_index(session_id)
+
+        if result:
+            logger.info(f"删除会话 - session_id: {session_id}")
+        else:
+            logger.warning(f"删除会话失败，会话不存在 - session_id: {session_id}")
+
+        return bool(result)
+
+    def update_session_title(self, session_id: str, title: str) -> bool:
+        """更新会话标题"""
+        state = self.get_session(session_id)
+        if not state:
+            return False
+
+        state.metadata["title"] = title
+        state.updated_at = datetime.utcnow().isoformat()
+        self._save_state(session_id, state)
+        self._add_to_index(session_id, state)
+        return True
 
     def _save_state(self, session_id: str, state: SessionState):
         """保存会话状态到 Redis"""

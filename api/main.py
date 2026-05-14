@@ -16,6 +16,7 @@ from api.routers.model_cards import router as model_cards_router
 from api.routers.simulation import router as simulation_router
 from api.routers.profit import router as profit_router
 from api.routers.config import router as config_router
+from api.routers.sessions import router as sessions_router
 
 # 初始化日志
 setup_logging(
@@ -64,6 +65,7 @@ app.include_router(simulation_router, prefix="/api/v1/simulation", tags=["仿真
 app.include_router(profit_router, prefix="/api/v1/profit", tags=["毛利抽成"])
 app.include_router(cache_router, prefix="/api/v1/cache", tags=["缓存管理"])
 app.include_router(config_router, prefix="/api/v1/config", tags=["配置管理"])
+app.include_router(sessions_router, prefix="/api/v1/sessions", tags=["会话管理"])
 
 
 @app.get("/")
