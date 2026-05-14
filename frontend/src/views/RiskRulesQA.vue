@@ -70,7 +70,7 @@
             </div>
             <template v-else>
               <AnswerDisplay :answer="msg.answer" />
-              <SourceList :sources="msg.sources" />
+              <SourceList :sources="msg.sources" :metadata="msg.retrieval_metadata" />
             </template>
           </div>
         </div>
@@ -190,7 +190,8 @@ const handleSend = async (query) => {
       role: 'assistant',
       answer: result.answer,
       sources: result.sources,
-      retrieved_count: result.retrieved_count
+      retrieved_count: result.retrieved_count,
+      retrieval_metadata: result.retrieval_metadata
     })
   } catch (e) {
     error.value = e.message || '查询失败，请稍后重试'
@@ -217,7 +218,8 @@ const handleClarificationSelect = async (selectedOption) => {
       role: 'assistant',
       answer: result.answer,
       sources: result.sources,
-      retrieved_count: result.retrieved_count
+      retrieved_count: result.retrieved_count,
+      retrieval_metadata: result.retrieval_metadata
     })
   } catch (e) {
     error.value = e.message || '查询失败，请稍后重试'

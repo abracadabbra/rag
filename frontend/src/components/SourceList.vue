@@ -7,6 +7,11 @@
       </svg>
       <span class="source-label">来源文档</span>
       <span class="source-count">({{ sources.length }})</span>
+      <div v-if="metadata" class="retrieval-info">
+        <span v-if="metadata.used_bm25" class="meta-tag bm25">BM25</span>
+        <span v-if="metadata.used_rerank" class="meta-tag rerank">精排</span>
+        <span class="meta-count">向量{{ metadata.vector_count }} / BM25{{ metadata.bm25_count }}</span>
+      </div>
     </div>
     <div class="source-items">
       <div
@@ -18,6 +23,9 @@
           <div class="source-tags">
             <span v-if="source.rule_id" class="tag rule-id">{{ source.rule_id }}</span>
             <span v-if="source.rule_name" class="tag rule-name">{{ source.rule_name }}</span>
+            <span v-if="source.source_type" :class="['tag', 'source-type', source.source_type]">
+              {{ sourceTypeLabel(source.source_type) }}
+            </span>
           </div>
           <div class="score-badge">
             <span class="score-value">{{ (source.score * 100).toFixed(0) }}%</span>
@@ -41,8 +49,17 @@ defineProps({
   sources: {
     type: Array,
     default: () => []
+  },
+  metadata: {
+    type: Object,
+    default: null
   }
 })
+
+function sourceTypeLabel(type) {
+  const labels = { vector: '向量', bm25: 'BM25', rerank: '精排' }
+  return labels[type] || type
+}
 </script>
 
 <style scoped>
@@ -61,6 +78,7 @@ defineProps({
   margin-bottom: 10px;
   color: #8c8c8c;
   font-size: 13px;
+  flex-wrap: wrap;
 }
 
 .source-label {
@@ -69,6 +87,48 @@ defineProps({
 
 .source-count {
   color: #bfbfbf;
+}
+
+.retrieval-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.meta-tag {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.meta-tag.bm25 {
+  background: #fff7e6;
+  color: #fa8c16;
+  border: 1px solid #ffd591;
+}
+
+.meta-tag.rerank {
+  background: #f6ffed;
+  color: #52c41a;
+  border: 1px solid #b7eb8f;
+}
+
+.meta-count {
+  font-size: 11px;
+  color: #8c8c8c;
+}
+
+.tag.source-type {
+  background: #f0f0f0;
+  color: #666;
+}
+
+.tag.source-type.rerank {
+  background: #f6ffed;
+  color: #52c41a;
+  border: 1px solid #b7eb8f;
 }
 
 .source-items {

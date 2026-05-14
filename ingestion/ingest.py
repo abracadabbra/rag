@@ -17,6 +17,14 @@ from ingestion.splitters import split_documents
 from ingestion.embeddings import embed_documents
 from api.config import settings
 
+# BM25 索引构建
+try:
+    from api.services.bm25_service import get_bm25_indexer
+    BM25_AVAILABLE = True
+except ImportError:
+    BM25_AVAILABLE = False
+    print("⚠️  BM25 模块不可用，跳过索引构建")
+
 
 class DataIngestion:
     """数据摄入管理器"""
@@ -108,6 +116,10 @@ class DataIngestion:
         # 插入 Milvus
         print(f"\n💾 插入 Milvus...")
         stats = self._insert_to_milvus(chunks, embeddings, scene_type)
+
+        # 构建 BM25 索引
+        if BM25_AVAILABLE and getattr(settings, 'enable_bm25', False):
+            self._build_bm25_index(chunks, scene_type)
 
         elapsed = time.time() - start_time
         print(f"\n✅ 摄入完成，耗时: {elapsed:.2f}秒")
@@ -201,6 +213,33 @@ class DataIngestion:
             print(f"内容长度: {len(chunk['content'])} 字符")
             print(f"元数据: {chunk['metadata']}")
             print(f"内容预览: {chunk['content'][:200]}...")
+
+    def _build_bm25_index(self, chunks: List[dict], scene_type: str):
+        """构建 BM25 索引"""
+        print(f"\n📚 构建 BM25 索引...")
+
+        try:
+            indexer = get_bm25_indexer()
+
+            # 准备文档数据
+            documents = []
+            for i, chunk in enumerate(chunks):
+                doc_id = self._generate_id(chunk, scene_type, i)
+                documents.append({
+                    "id": doc_id,
+                    "content": chunk["content"],
+                    "scene_type": scene_type,
+                    "metadata": chunk["metadata"]
+                })
+
+            # 构建索引
+            indexer.build_index(documents)
+            indexer.save_index()
+
+            print(f"✅ BM25 索引构建完成，文档数: {len(documents)}")
+
+        except Exception as e:
+            print(f"⚠️  BM25 索引构建失败: {e}")
 
 
 @click.command()

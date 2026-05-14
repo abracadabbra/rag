@@ -79,7 +79,9 @@ async def query_risk_rules(request: QueryRequest):
             scene_type="risk_rule",
             top_k=request.top_k,
             score_threshold=request.score_threshold,
-            clarification_choice=request.clarification_choice
+            clarification_choice=request.clarification_choice,
+            use_rerank=request.use_rerank,
+            use_bm25=request.use_bm25
         )
 
         elapsed_ms = int((time.time() - start_time) * 1000)
@@ -96,7 +98,8 @@ async def query_risk_rules(request: QueryRequest):
             retrieved_count=result["retrieved_count"],
             session_id=result["session_id"],
             needs_clarification=result.get("needs_clarification", False),
-            clarification_options=result.get("clarification_options", [])
+            clarification_options=result.get("clarification_options", []),
+            retrieval_metadata=result.get("retrieval_metadata")
         )
 
     except ConnectionError as e:

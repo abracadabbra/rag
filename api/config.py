@@ -80,6 +80,10 @@ class Settings(BaseSettings):
     rerank_model: str = "BAAI/bge-reranker-v2-m3"
     rerank_top_k: int = 3
 
+    # BM25 粗排
+    enable_bm25: bool = False
+    bm25_index_dir: str = "data/bm25_index"
+
     # ==================== 缓存配置 ====================
     cache_enabled: bool = True
     cache_ttl: int = 3600  # 1 小时

@@ -82,7 +82,9 @@ class ConversationAgent:
         scene_type: str = "risk_rule",
         top_k: int = None,
         score_threshold: float = None,
-        clarification_choice: Optional[str] = None
+        clarification_choice: Optional[str] = None,
+        use_rerank: bool = None,
+        use_bm25: bool = None
     ) -> Dict[str, Any]:
         """
         处理用户查询
@@ -94,6 +96,8 @@ class ConversationAgent:
             top_k: 返回文档数量
             score_threshold: 相似度阈值
             clarification_choice: 用户选择的澄清选项
+            use_rerank: 是否使用精排（None=按配置）
+            use_bm25: 是否使用 BM25 粗排（None=按配置）
 
         Returns:
             查询结果
@@ -124,6 +128,8 @@ class ConversationAgent:
         # 传递检索参数（通过 metadata）
         initial_state["top_k"] = top_k or settings.retrieval_top_k
         initial_state["score_threshold"] = score_threshold or settings.retrieval_score_threshold
+        initial_state["use_rerank"] = use_rerank
+        initial_state["use_bm25"] = use_bm25
 
         # 执行工作流
         try:
@@ -188,7 +194,9 @@ class ConversationAgent:
                 query=query,
                 scene_type=state["scene_type"],
                 top_k=state.get("top_k", 5),
-                score_threshold=0.5  # 使用较低的阈值以获取更多候选
+                score_threshold=0.5,  # 使用较低的阈值以获取更多候选
+                use_rerank=state.get("use_rerank"),
+                use_bm25=state.get("use_bm25")
             )
             retrieved_docs = result.get("sources", [])
         except Exception as e:
@@ -253,7 +261,9 @@ class ConversationAgent:
             query=enhanced_query,
             scene_type=scene_type,
             top_k=top_k,
-            score_threshold=score_threshold
+            score_threshold=score_threshold,
+            use_rerank=state.get("use_rerank"),
+            use_bm25=state.get("use_bm25")
         )
 
         # 更新状态
