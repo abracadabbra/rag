@@ -1,7 +1,13 @@
 <template>
   <div class="model-cards-qa">
+    <SessionSidebar :isOpen="sidebarOpen" :currentSessionId="sessionId" @close="sidebarOpen = false" @select-session="handleSelectSession" @session-created="handleSessionCreated" ref="sidebar" />
     <div class="header">
       <div class="header-left">
+        <button @click="sidebarOpen = true" class="menu-btn">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M2 4h16v2H2V4zm0 5h16v2H2V9zm0 5h16v2H2v-2z"/>
+          </svg>
+        </button>
         <router-link to="/" class="back-btn">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
             <path d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"/>
@@ -119,11 +125,12 @@
 
 <script setup>
 import { ref, onMounted, nextTick, watch } from 'vue'
-import { queryModelCards, checkHealth } from '../services/api.js'
+import { queryModelCards, checkHealth, getSession } from '../services/api.js'
 import ChatInput from '../components/ChatInput.vue'
 import AnswerDisplay from '../components/AnswerDisplay.vue'
 import SourceList from '../components/SourceList.vue'
 import ClarificationOptions from '../components/ClarificationOptions.vue'
+import SessionSidebar from '../components/SessionSidebar.vue'
 
 const sessionId = ref(null)
 const messages = ref([])
@@ -132,6 +139,8 @@ const error = ref(null)
 const clarificationOptions = ref([])
 const apiConnected = ref(false)
 const messagesContainer = ref(null)
+const sidebarOpen = ref(false)
+const sidebar = ref(null)
 
 const suggestions = [
   '客服机器人部署在哪？',
@@ -195,6 +204,29 @@ const resetSession = () => {
   error.value = null
   clarificationOptions.value = []
 }
+
+const handleSelectSession = async (newSessionId) => {
+  if (!newSessionId) return
+  sessionId.value = newSessionId
+  sidebarOpen.value = false
+  messages.value = []
+  clarificationOptions.value = []
+  try {
+    const session = await getSession(newSessionId)
+    if (session && session.messages) {
+      for (const msg of session.messages) {
+        if (msg.role === 'user') messages.value.push({ role: 'user', content: msg.content })
+        else if (msg.role === 'assistant') messages.value.push({ role: 'assistant', answer: msg.content, sources: [], retrieved_count: 0 })
+      }
+    }
+  } catch (e) { console.error('加载会话失败:', e) }
+}
+
+const handleSessionCreated = (newSessionId) => {
+  sessionId.value = newSessionId
+  sidebarOpen.value = false
+  messages.value = []
+}
 </script>
 
 <style scoped>
@@ -203,6 +235,8 @@ const resetSession = () => {
 .header-left { display: flex; align-items: center; gap: 12px; }
 .back-btn { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 10px; color: #666; transition: all 0.2s; }
 .back-btn:hover { background: #f5f5f5; color: #333; }
+.menu-btn { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 10px; background: none; border: none; color: #666; cursor: pointer; transition: all 0.2s; }
+.menu-btn:hover { background: #f5f5f5; color: #333; }
 .logo { flex-shrink: 0; }
 .title-group h1 { font-size: 18px; font-weight: 600; color: #1a1a1a; margin: 0; }
 .subtitle { font-size: 13px; color: #8c8c8c; }

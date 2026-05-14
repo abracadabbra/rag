@@ -178,3 +178,36 @@ export async function checkHealth() {
   }
   return response.json()
 }
+
+/**
+ * 获取缓存统计信息
+ */
+export async function getCacheStats() {
+  const response = await fetch(`${API_BASE}/cache/stats`)
+  if (!response.ok) throw new Error('获取缓存状态失败')
+  return response.json()
+}
+
+/**
+ * 清除指定模式的缓存
+ * @param {string|null} pattern - 缓存 key 模式
+ * @param {string|null} sceneType - 场景类型 (risk_rule, model_card 等)
+ */
+export async function invalidateCache(pattern = null, sceneType = null) {
+  const response = await fetch(`${API_BASE}/cache/invalidate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ pattern, scene_type: sceneType })
+  })
+  if (!response.ok) throw new Error('清除缓存失败')
+  return response.json()
+}
+
+/**
+ * 清空所有缓存
+ */
+export async function clearAllCache() {
+  const response = await fetch(`${API_BASE}/cache/clear`, { method: 'DELETE' })
+  if (!response.ok) throw new Error('清空缓存失败')
+  return response.json()
+}
