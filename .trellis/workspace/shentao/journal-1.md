@@ -68,3 +68,36 @@
 4. 进入阶段1：风控规则 MVP
 
 ---
+
+
+## Session 1: BGE-reranker + BM25 粗排精排接入
+
+**Date**: 2026-05-14
+**Task**: BGE-reranker + BM25 粗排精排接入
+**Branch**: `main`
+
+### Summary
+
+实现 BGE-reranker 精排 + BM25 粗排 + RRF 混合检索，支持热配置更新和前端来源展示
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `354be68` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
