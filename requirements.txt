@@ -9,18 +9,19 @@ pydantic-settings==2.1.0
 # ==================== LangChain 生态 ====================
 langchain==0.1.0
 langgraph==0.0.20
-langchain-openai==0.0.2
+langchain-core==0.1.23
+langchain-openai==1.2.1
 langchain-community==0.0.10
 
 # ==================== 向量数据库 ====================
-pymilvus==2.3.4
+pymilvus==3.0.0
 
 # ==================== 缓存 ====================
 redis==5.0.1
 
 # ==================== Embedding 模型 ====================
 sentence-transformers==2.2.2
-FlagEmbedding==1.2.3
+FlagEmbedding==1.4.0
 rank-bm25==0.2.2
 
 # ==================== 文档加载 ====================

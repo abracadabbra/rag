@@ -92,6 +92,45 @@ class BGEEmbedding(EmbeddingGenerator):
         return embeddings['dense_vecs'][0].tolist()
 
 
+class SentenceTransformerEmbedding(EmbeddingGenerator):
+    """Sentence Transformer Embedding 生成器"""
+
+    def __init__(
+        self,
+        model_name: str = "all-MiniLM-L6-v2",
+        device: str = "cpu"
+    ):
+        """
+        初始化 Sentence Transformer 模型
+
+        Args:
+            model_name: 模型名称
+            device: 设备（cpu 或 cuda）
+        """
+        from sentence_transformers import SentenceTransformer
+
+        print(f"🔧 加载 Sentence Transformer 模型: {model_name}")
+        print(f"   设备: {device}")
+
+        self.model = SentenceTransformer(model_name, device=device)
+
+        print(f"✅ Sentence Transformer 模型加载完成")
+
+    def embed_documents(self, texts: List[str]) -> List[List[float]]:
+        """
+        批量生成文档 Embedding
+        """
+        embeddings = self.model.encode(texts)
+        return embeddings.tolist()
+
+    def embed_query(self, text: str) -> List[float]:
+        """
+        生成查询 Embedding
+        """
+        embedding = self.model.encode([text])
+        return embedding[0].tolist()
+
+
 class OpenAIEmbedding(EmbeddingGenerator):
     """OpenAI Embedding 生成器"""
 
@@ -157,7 +196,12 @@ def get_embedding_generator() -> EmbeddingGenerator:
     Returns:
         Embedding 生成器实例
     """
-    if settings.use_openai_embedding:
+    if settings.use_sentence_transformer:
+        return SentenceTransformerEmbedding(
+            model_name=settings.sentence_transformer_model,
+            device=settings.embedding_device
+        )
+    elif settings.use_openai_embedding:
         return OpenAIEmbedding(
             model=settings.openai_embedding_model,
             api_key=settings.openai_api_key

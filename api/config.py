@@ -70,6 +70,10 @@ class Settings(BaseSettings):
     use_openai_embedding: bool = False
     openai_embedding_model: str = "text-embedding-3-small"
 
+    # Sentence Transformer Embedding
+    use_sentence_transformer: bool = False
+    sentence_transformer_model: str = "all-MiniLM-L6-v2"
+
     # ==================== 检索配置 ====================
     retrieval_top_k: int = 5
     retrieval_score_threshold: float = 0.7

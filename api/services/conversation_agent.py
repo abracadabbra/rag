@@ -41,6 +41,11 @@ class ConversationAgent:
         self.rag_service = get_rag_service()
         self.clarification_service = get_clarification_service()
         self.graph = self._build_graph()
+        # 存储检索参数（不通过 LangGraph state 传递）
+        self._top_k = None
+        self._score_threshold = None
+        self._use_rerank = None
+        self._use_bm25 = None
 
         logger.info("对话 Agent 初始化完成")
 
@@ -125,11 +130,11 @@ class ConversationAgent:
             "clarification_choice": clarification_choice
         }
 
-        # 传递检索参数（通过 metadata）
-        initial_state["top_k"] = top_k or settings.retrieval_top_k
-        initial_state["score_threshold"] = score_threshold or settings.retrieval_score_threshold
-        initial_state["use_rerank"] = use_rerank
-        initial_state["use_bm25"] = use_bm25
+        # 存储检索参数（不通过 LangGraph state 传递）
+        self._top_k = top_k or settings.retrieval_top_k
+        self._score_threshold = score_threshold or settings.retrieval_score_threshold
+        self._use_rerank = use_rerank
+        self._use_bm25 = use_bm25
 
         # 执行工作流
         try:
@@ -193,10 +198,10 @@ class ConversationAgent:
             result = self.rag_service.query(
                 query=query,
                 scene_type=state["scene_type"],
-                top_k=state.get("top_k", 5),
+                top_k=self._top_k,
                 score_threshold=0.5,  # 使用较低的阈值以获取更多候选
-                use_rerank=state.get("use_rerank"),
-                use_bm25=state.get("use_bm25")
+                use_rerank=self._use_rerank,
+                use_bm25=self._use_bm25
             )
             retrieved_docs = result.get("sources", [])
         except Exception as e:
@@ -242,8 +247,6 @@ class ConversationAgent:
         """检索相关文档"""
         query = state["query"]
         scene_type = state["scene_type"]
-        top_k = state.get("top_k", settings.retrieval_top_k)
-        score_threshold = state.get("score_threshold", settings.retrieval_score_threshold)
 
         # 如果有对话历史，构建增强查询
         enhanced_query = query
@@ -260,10 +263,10 @@ class ConversationAgent:
         result = self.rag_service.query(
             query=enhanced_query,
             scene_type=scene_type,
-            top_k=top_k,
-            score_threshold=score_threshold,
-            use_rerank=state.get("use_rerank"),
-            use_bm25=state.get("use_bm25")
+            top_k=self._top_k,
+            score_threshold=self._score_threshold,
+            use_rerank=self._use_rerank,
+            use_bm25=self._use_bm25
         )
 
         # 更新状态

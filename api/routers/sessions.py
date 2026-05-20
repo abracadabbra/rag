@@ -54,7 +54,7 @@ class UpdateTitleRequest(BaseModel):
     title: str
 
 
-@router.get("/sessions", response_model=SessionListResponse, summary="获取会话列表")
+@router.get("/", response_model=SessionListResponse, summary="获取会话列表")
 async def list_sessions(limit: int = 50, offset: int = 0):
     """
     获取当前所有会话列表
@@ -86,7 +86,7 @@ async def list_sessions(limit: int = 50, offset: int = 0):
         raise HTTPException(status_code=500, detail=f"获取会话列表失败: {str(e)}")
 
 
-@router.post("/sessions", response_model=CreateSessionResponse, summary="创建会话")
+@router.post("/", response_model=CreateSessionResponse, summary="创建会话")
 async def create_session(request: CreateSessionRequest = None):
     """
     创建新会话
@@ -113,7 +113,7 @@ async def create_session(request: CreateSessionRequest = None):
         raise HTTPException(status_code=500, detail=f"创建会话失败: {str(e)}")
 
 
-@router.delete("/sessions/{session_id}", response_model=DeleteSessionResponse, summary="删除会话")
+@router.delete("/{session_id}", response_model=DeleteSessionResponse, summary="删除会话")
 async def delete_session(session_id: str):
     """删除指定会话"""
     try:
@@ -131,7 +131,7 @@ async def delete_session(session_id: str):
         raise HTTPException(status_code=500, detail=f"删除会话失败: {str(e)}")
 
 
-@router.patch("/sessions/{session_id}/title", response_model=DeleteSessionResponse, summary="更新会话标题")
+@router.patch("/{session_id}/title", response_model=DeleteSessionResponse, summary="更新会话标题")
 async def update_session_title(session_id: str, request: UpdateTitleRequest):
     """更新会话标题"""
     try:
@@ -149,7 +149,7 @@ async def update_session_title(session_id: str, request: UpdateTitleRequest):
         raise HTTPException(status_code=500, detail=f"更新标题失败: {str(e)}")
 
 
-@router.get("/sessions/{session_id}", summary="获取会话详情")
+@router.get("/{session_id}", summary="获取会话详情")
 async def get_session(session_id: str):
     """获取指定会话的完整信息"""
     try:

@@ -12,16 +12,35 @@ from api.config import settings
 logger = logging.getLogger(__name__)
 
 
+def get_llm_client():
+    """获取 LLM 客户端"""
+    if settings.llm_provider == "minimax":
+        return OpenAI(
+            api_key=settings.minimax_api_key,
+            base_url=settings.minimax_api_base
+        )
+    elif settings.llm_provider == "openai":
+        return OpenAI(
+            api_key=settings.openai_api_key,
+            base_url=settings.openai_api_base
+        )
+    elif settings.llm_provider == "local":
+        return OpenAI(
+            api_key="dummy",
+            base_url=settings.local_llm_base_url
+        )
+    else:
+        raise ValueError(f"未知的 LLM Provider: {settings.llm_provider}")
+
+
 class ClarificationService:
     """澄清服务"""
 
     def __init__(self):
         """初始化澄清服务"""
-        self.llm_client = OpenAI(
-            api_key=settings.openai_api_key,
-            base_url=settings.openai_api_base
-        )
-        logger.info("澄清服务初始化完成")
+        self.llm_client = get_llm_client()
+        self.model = settings.minimax_model if settings.llm_provider == "minimax" else settings.openai_model
+        logger.info(f"澄清服务初始化完成 - Model: {self.model}")
 
     def needs_clarification(
         self,
@@ -201,7 +220,7 @@ CLARIFY:
 
         try:
             response = self.llm_client.chat.completions.create(
-                model=settings.openai_model,
+                model=self.model,
                 messages=[
                     {"role": "system", "content": "你是一个专业的问答助手。"},
                     {"role": "user", "content": prompt}

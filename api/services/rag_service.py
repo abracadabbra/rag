@@ -24,10 +24,9 @@ logger = logging.getLogger(__name__)
 class RAGService:
     """RAG 服务"""
 
-    def __init__(self):
-        """初始化 RAG 服务"""
+    def _connect_milvus(self):
+        """连接 Milvus"""
         try:
-            # 连接 Milvus
             connections.connect(
                 alias="default",
                 host=settings.milvus_host,
@@ -42,6 +41,11 @@ class RAGService:
         except Exception as e:
             logger.error(f"Milvus 连接失败: {e}", exc_info=True)
             raise ConnectionError(f"无法连接到 Milvus: {e}")
+
+    def __init__(self):
+        """初始化 RAG 服务"""
+        self._connect_milvus()
+        self.cache_service = get_cache_service()
 
         try:
             # 初始化 LLM（根据配置的 provider）
@@ -71,9 +75,6 @@ class RAGService:
         except Exception as e:
             logger.error(f"LLM 客户端初始化失败: {e}", exc_info=True)
             raise ConnectionError(f"无法初始化 LLM 客户端: {e}")
-
-        # 初始化缓存服务
-        self.cache_service = get_cache_service()
 
         print(f"✅ RAG 服务初始化完成")
         print(f"   Milvus Collection: {settings.milvus_collection}")
@@ -142,8 +143,7 @@ class RAGService:
                 data=[query_vector],
                 anns_field="vector",
                 param=search_params,
-                limit=top_k * 3 if use_rerank else top_k,  # 精排需要更多候选
-                expr=f'scene_type == "{scene_type}"',
+                limit=top_k * 5 if use_rerank else top_k * 2,  # 精排需要更多候选，先多取一些
                 output_fields=["content", "metadata", "scene_type"]
             )
         except Exception as e:
@@ -155,13 +155,23 @@ class RAGService:
         # 转换为统一格式
         vector_docs = []
         for hit in results[0]:
+            metadata = hit.entity.get("metadata", "{}")
+            if isinstance(metadata, str):
+                import json
+                try:
+                    metadata = json.loads(metadata)
+                except:
+                    metadata = {}
             vector_docs.append({
                 "content": hit.entity.get("content"),
-                "metadata": hit.entity.get("metadata"),
+                "metadata": metadata,
                 "scene_type": hit.entity.get("scene_type"),
                 "score": hit.score,
                 "id": hit.id
             })
+
+        # 过滤 scene_type
+        vector_docs = [doc for doc in vector_docs if doc["scene_type"] == scene_type]
 
         # 初始化各阶段耗时变量
         bm25_time_ms = 0
@@ -197,17 +207,14 @@ class RAGService:
             for doc in fused_docs:
                 # 使用向量分数或混合分数判断
                 score = doc.get("rrf_score", doc.get("score", 0))
-                if score >= score_threshold * 0.1:  # RRF 阈值适当放宽
+                if score >= score_threshold * 0.01:  # RRF 阈值大幅放宽
                     retrieved_docs.append(doc)
 
             fusion_time_ms = int((time.time() - fusion_start) * 1000)
             logger.debug(f"混合融合耗时: {fusion_time_ms}ms, 融合后结果数: {len(retrieved_docs)}")
         else:
-            # 仅向量检索
-            retrieved_docs = [
-                doc for doc in vector_docs
-                if doc["score"] >= score_threshold
-            ]
+            # 仅向量检索 - 不过滤，返回所有
+            retrieved_docs = vector_docs
 
         logger.info(
             f"粗排完成 - 向量结果: {len(vector_docs)}, BM25结果: {len(bm25_docs)}, "

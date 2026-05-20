@@ -9,6 +9,7 @@ import time
 from pathlib import Path
 from typing import List
 from pymilvus import connections, Collection
+import json
 import hashlib
 from datetime import datetime
 
@@ -163,7 +164,7 @@ class DataIngestion:
                 vectors.append(embedding)
                 scene_types.append(scene_type)
                 contents.append(chunk["content"][:65535])  # 限制长度
-                metadatas.append(chunk["metadata"])
+                metadatas.append(json.dumps(chunk["metadata"], ensure_ascii=False))
                 created_ats.append(int(datetime.now().timestamp() * 1000))
 
                 success += 1
