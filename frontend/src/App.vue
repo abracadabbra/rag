@@ -9,6 +9,8 @@
       <span>© 2026 RAG System</span>
       <span class="divider">·</span>
       <span>版本 0.1.0</span>
+      <span class="divider">·</span>
+      <router-link to="/settings" class="settings-link">API 设置</router-link>
     </footer>
   </div>
 </template>
@@ -91,6 +93,16 @@ a {
 
 .app-footer .divider {
   margin: 0 8px;
+}
+
+.settings-link {
+  color: #8c8c8c;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.settings-link:hover {
+  color: #1890ff;
 }
 
 /* 路由过渡动画 */

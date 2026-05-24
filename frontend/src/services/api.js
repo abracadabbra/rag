@@ -211,3 +211,26 @@ export async function clearAllCache() {
   if (!response.ok) throw new Error('清空缓存失败')
   return response.json()
 }
+
+/**
+ * 获取 LLM 配置
+ */
+export async function getLlmSettings() {
+  const response = await fetch(`${API_BASE}/settings/`)
+  if (!response.ok) throw new Error('获取配置失败')
+  return response.json()
+}
+
+/**
+ * 更新 LLM 配置
+ * @param {Object} updates - 要更新的字段
+ */
+export async function updateLlmSettings(updates) {
+  const response = await fetch(`${API_BASE}/settings/`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(updates)
+  })
+  if (!response.ok) throw new Error('更新配置失败')
+  return response.json()
+}
