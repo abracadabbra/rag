@@ -15,7 +15,7 @@ from pymilvus import (
 
 def create_unified_collection(
     collection_name: str = "unified_docs",
-    dim: int = 1024,  # BGE-M3 向量维度
+    dim: int = 384,  # all-MiniLM-L6-v2 向量维度
     drop_old: bool = False
 ):
     """
@@ -23,7 +23,7 @@ def create_unified_collection(
 
     Args:
         collection_name: Collection 名称
-        dim: 向量维度（BGE-M3 为 1024）
+        dim: 向量维度（all-MiniLM-L6-v2 为 384）
         drop_old: 是否删除已存在的 Collection
     """
 
@@ -78,11 +78,12 @@ def create_unified_collection(
             description="文本块的原始内容"
         ),
 
-        # 元数据（JSON 格式）
+        # 元数据（JSON 字符串）
         FieldSchema(
             name="metadata",
-            dtype=DataType.JSON,
-            description="文档元数据，包含 rule_id, category, version, update_date 等"
+            dtype=DataType.VARCHAR,
+            max_length=65535,
+            description="文档元数据 JSON 字符串，包含 rule_id, category, version, update_date 等"
         ),
 
         # 创建时间
