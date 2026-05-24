@@ -14,8 +14,13 @@
 - [x] 基础 RAG 功能实现
 - [x] 完整日志系统
 - [x] 健康检查和错误处理
+- [x] API Settings 后端验证和前端 UI
+- [x] Milvus schema 修复（维度 384，VARCHAR 元数据）
+- [x] Docker 生产部署配置（多阶段构建）
+- [x] 前端会话管理侧边栏
+- [x] Settings 和 Reranker 测试覆盖
+- [x] Milvus 客户端 server/lite 自动切换
 - [ ] 第一批数据导入
-- [ ] 前端会话管理组件
 
 ## 快速开始
 
@@ -101,10 +106,23 @@ rag-system/
 │   │   ├── risk_rules.py         # 风控规则查询
 │   │   ├── model_cards.py        # 模型卡片检索
 │   │   ├── simulation.py         # 仿真解读
-│   │   └── profit.py             # 毛利查询
+│   │   ├── profit.py             # 毛利查询
+│   │   └── settings.py           # API 设置管理
 │   ├── services/                 # 业务逻辑
-│   │   └── rag_service.py
+│   │   ├── rag_service.py
+│   │   └── settings_service.py   # 设置服务（.env 读写）
 │   └── config.py                 # 配置管理
+│
+├── frontend/                     # Vue 3 前端
+│   ├── src/
+│   │   ├── views/
+│   │   │   └── ApiSettings.vue   # API 设置页面
+│   │   ├── components/           # 组件
+│   │   └── services/
+│   │       └── api.js            # API 客户端
+│   ├── Dockerfile                # 前端 Docker 构建
+│   ├── nginx.conf                # Nginx 配置
+│   └── vite.config.js            # Vite 配置
 │
 ├── ingestion/                    # 数据摄入
 │   ├── ingest.py                 # CLI 工具
@@ -117,13 +135,16 @@ rag-system/
 │   ├── milvus_schema.py          # Milvus Collection 定义
 │   └── README.md                 # 部署指南
 │
+├── Dockerfile                    # 后端 Docker 构建
 ├── data/                         # 数据目录
 │   ├── risk_rules/               # 风控规则文档
+│   ├── model_cards/              # 模型卡片数据
 │   └── test_cases/               # 测试用例
 │
 ├── tests/                        # 测试
 │   ├── test_ingestion.py
-│   └── test_api.py
+│   ├── test_api.py
+│   └── test_settings.py          # Settings 测试
 │
 ├── .trellis/                     # Trellis 任务管理
 │   └── tasks/
@@ -199,10 +220,15 @@ Redis (会话状态) + Milvus (向量检索) + LLM
 - 健康检查（综合检查 + 独立检查）
 - 错误处理分类（400/503/504/500）
 - 数据摄入 Pipeline（支持 Markdown、PDF、DOCX）
+- API Settings（后端 .env 配置管理 + 前端设置界面）
+- Milvus schema 修复（维度 1024→384，JSON→VARCHAR）
+- Docker 生产部署（后端/前端多阶段构建，nginx 反向代理）
+- 前端会话管理侧边栏
+- Settings 和 Reranker 测试覆盖
+- Milvus 客户端 server/lite 自动切换
 
 📋 **待完成：**
 - 第一批数据导入和测试
-- 前端会话管理组件
 
 ## 文档索引
 
