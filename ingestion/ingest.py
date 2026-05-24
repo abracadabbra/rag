@@ -2,13 +2,13 @@
 """
 数据摄入 CLI 工具
 用途：将文档导入 Milvus 向量数据库
+支持 Milvus Server 和 Milvus Lite 自动切换
 """
 
 import click
 import time
 from pathlib import Path
 from typing import List
-from pymilvus import connections, Collection
 import json
 import hashlib
 from datetime import datetime
@@ -16,6 +16,7 @@ from datetime import datetime
 from ingestion.loaders import load_documents
 from ingestion.splitters import split_documents
 from ingestion.embeddings import embed_documents
+from ingestion.milvus_client import get_milvus_client
 from api.config import settings
 
 # BM25 索引构建
@@ -31,23 +32,21 @@ class DataIngestion:
     """数据摄入管理器"""
 
     def __init__(self, collection_name: str = None):
-        """
-        初始化数据摄入管理器
-
-        Args:
-            collection_name: Collection 名称
-        """
         self.collection_name = collection_name or settings.milvus_collection
 
-        # 连接 Milvus
-        print(f"🔗 连接 Milvus: {settings.milvus_host}:{settings.milvus_port}")
-        connections.connect(
-            alias="default",
-            host=settings.milvus_host,
-            port=settings.milvus_port
-        )
+        # 获取 embedding 维度
+        from ingestion.embeddings import get_embedding_generator
+        gen = get_embedding_generator()
+        test_vec = gen.embed_query("test")
+        self.dimension = len(test_vec)
 
-        self.collection = Collection(self.collection_name)
+        # 连接 Milvus（自动回退到 Lite）
+        self.client = get_milvus_client(
+            host=settings.milvus_host,
+            port=settings.milvus_port,
+            collection_name=self.collection_name,
+            dimension=self.dimension
+        )
         print(f"✅ 连接成功，Collection: {self.collection_name}")
 
     def ingest_directory(
@@ -57,29 +56,15 @@ class DataIngestion:
         file_pattern: str = "*",
         dry_run: bool = False
     ) -> dict:
-        """
-        摄入目录下的所有文档
-
-        Args:
-            source_dir: 源目录
-            scene_type: 场景类型（risk_rule, model_card, simulation, profit）
-            file_pattern: 文件匹配模式
-            dry_run: 是否为试运行（不实际插入数据）
-
-        Returns:
-            摄入统计信息
-        """
+        """摄入目录下的所有文档"""
         start_time = time.time()
 
-        # 查找文件
         source_path = Path(source_dir)
         if not source_path.exists():
             raise ValueError(f"目录不存在: {source_dir}")
 
-        # 支持的文件扩展名
         extensions = [".md", ".pdf", ".docx", ".txt"]
         file_paths = []
-
         for ext in extensions:
             file_paths.extend(source_path.glob(f"**/{file_pattern}{ext}"))
 
@@ -141,57 +126,33 @@ class DataIngestion:
         failed = 0
         skipped = 0
 
-        # 准备数据
-        ids = []
-        vectors = []
-        scene_types = []
-        contents = []
-        metadatas = []
-        created_ats = []
-
+        rows = []
         for i, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
             try:
-                # 生成唯一 ID
                 doc_id = self._generate_id(chunk, scene_type, i)
-
-                # 检查是否已存在（可选）
-                # existing = self.collection.query(expr=f"id == '{doc_id}'", limit=1)
-                # if existing:
-                #     skipped += 1
-                #     continue
-
-                ids.append(doc_id)
-                vectors.append(embedding)
-                scene_types.append(scene_type)
-                contents.append(chunk["content"][:65535])  # 限制长度
-                metadatas.append(json.dumps(chunk["metadata"], ensure_ascii=False))
-                created_ats.append(int(datetime.now().timestamp() * 1000))
-
+                rows.append({
+                    "id": doc_id,
+                    "vector": embedding,
+                    "scene_type": scene_type,
+                    "content": chunk["content"][:65535],
+                    "metadata": json.dumps(chunk["metadata"], ensure_ascii=False),
+                    "created_at": int(datetime.now().timestamp() * 1000)
+                })
                 success += 1
-
             except Exception as e:
                 print(f"❌ 处理失败: {e}")
                 failed += 1
 
-        # 批量插入
-        if ids:
+        if rows:
             try:
-                self.collection.insert([
-                    ids,
-                    vectors,
-                    scene_types,
-                    contents,
-                    metadatas,
-                    created_ats
-                ])
-
-                # 刷新
-                self.collection.flush()
-                print(f"✅ 成功插入 {len(ids)} 条数据")
-
+                self.client.insert(
+                    collection_name=self.collection_name,
+                    data=rows
+                )
+                print(f"✅ 成功插入 {len(rows)} 条数据")
             except Exception as e:
                 print(f"❌ 插入失败: {e}")
-                failed += len(ids)
+                failed += len(rows)
                 success = 0
 
         return {"success": success, "failed": failed, "skipped": skipped}
@@ -201,8 +162,6 @@ class DataIngestion:
         metadata = chunk["metadata"]
         source = metadata.get("source", "unknown")
         chunk_index = metadata.get("chunk_index", index)
-
-        # 使用文件路径 + 块索引生成 ID
         id_str = f"{scene_type}_{source}_{chunk_index}"
         return hashlib.md5(id_str.encode()).hexdigest()
 
@@ -218,11 +177,8 @@ class DataIngestion:
     def _build_bm25_index(self, chunks: List[dict], scene_type: str):
         """构建 BM25 索引"""
         print(f"\n📚 构建 BM25 索引...")
-
         try:
             indexer = get_bm25_indexer()
-
-            # 准备文档数据
             documents = []
             for i, chunk in enumerate(chunks):
                 doc_id = self._generate_id(chunk, scene_type, i)
@@ -232,56 +188,21 @@ class DataIngestion:
                     "scene_type": scene_type,
                     "metadata": chunk["metadata"]
                 })
-
-            # 构建索引
             indexer.build_index(documents)
             indexer.save_index()
-
             print(f"✅ BM25 索引构建完成，文档数: {len(documents)}")
-
         except Exception as e:
             print(f"⚠️  BM25 索引构建失败: {e}")
 
 
 @click.command()
-@click.option(
-    "--source",
-    "-s",
-    required=True,
-    help="源目录路径"
-)
-@click.option(
-    "--scene",
-    "-t",
-    required=True,
-    type=click.Choice(["risk_rule", "model_card", "simulation", "profit"]),
-    help="场景类型"
-)
-@click.option(
-    "--pattern",
-    "-p",
-    default="*",
-    help="文件匹配模式（默认: *）"
-)
-@click.option(
-    "--collection",
-    "-c",
-    default=None,
-    help="Collection 名称（默认: 从配置读取）"
-)
-@click.option(
-    "--dry-run",
-    is_flag=True,
-    help="试运行模式，不实际插入数据"
-)
+@click.option("--source", "-s", required=True, help="源目录路径")
+@click.option("--scene", "-t", required=True, type=click.Choice(["risk_rule", "model_card", "simulation", "profit"]), help="场景类型")
+@click.option("--pattern", "-p", default="*", help="文件匹配模式（默认: *）")
+@click.option("--collection", "-c", default=None, help="Collection 名称（默认: 从配置读取）")
+@click.option("--dry-run", is_flag=True, help="试运行模式，不实际插入数据")
 def main(source: str, scene: str, pattern: str, collection: str, dry_run: bool):
-    """
-    数据摄入 CLI 工具
-
-    示例:
-        python ingest.py --source data/risk_rules --scene risk_rule
-        python ingest.py -s data/risk_rules -t risk_rule --dry-run
-    """
+    """数据摄入 CLI 工具"""
     print("=" * 60)
     print("  RAG 系统数据摄入工具")
     print("=" * 60)
@@ -294,10 +215,8 @@ def main(source: str, scene: str, pattern: str, collection: str, dry_run: bool):
             file_pattern=pattern,
             dry_run=dry_run
         )
-
         if stats["failed"] > 0:
             exit(1)
-
     except Exception as e:
         print(f"\n❌ 摄入失败: {e}")
         import traceback

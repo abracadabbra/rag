@@ -4,6 +4,7 @@
     <SessionSidebar
       :isOpen="sidebarOpen"
       :currentSessionId="sessionId"
+      sceneType="risk_rule"
       @close="sidebarOpen = false"
       @select-session="handleSelectSession"
       @session-created="handleSessionCreated"

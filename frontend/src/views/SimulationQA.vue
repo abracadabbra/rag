@@ -1,6 +1,6 @@
 <template>
   <div class="simulation-qa">
-    <SessionSidebar :isOpen="sidebarOpen" :currentSessionId="sessionId" @close="sidebarOpen = false" @select-session="handleSelectSession" @session-created="handleSessionCreated" ref="sidebar" />
+    <SessionSidebar :isOpen="sidebarOpen" :currentSessionId="sessionId" sceneType="simulation" @close="sidebarOpen = false" @select-session="handleSelectSession" @session-created="handleSessionCreated" ref="sidebar" />
     <div class="header">
       <div class="header-left">
         <button @click="sidebarOpen = true" class="menu-btn">

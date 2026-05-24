@@ -7,11 +7,11 @@ RAG 服务模块
 import logging
 import time
 from typing import List, Dict, Any, Optional
-from pymilvus import connections, Collection
 from openai import OpenAI
 
 from api.config import settings
 from ingestion.embeddings import embed_query
+from ingestion.milvus_client import get_milvus_client
 from api.services.cache_service import get_cache_service
 from api.services.bm25_service import get_bm25_indexer, compute_bm25_scores_dynamic
 from api.services.rerank_service import get_reranker
@@ -25,15 +25,20 @@ class RAGService:
     """RAG 服务"""
 
     def _connect_milvus(self):
-        """连接 Milvus"""
+        """连接 Milvus（支持 Server 和 Lite 自动切换）"""
         try:
-            connections.connect(
-                alias="default",
+            from ingestion.embeddings import get_embedding_generator
+            gen = get_embedding_generator()
+            test_vec = gen.embed_query("test")
+            dimension = len(test_vec)
+
+            self.milvus_client = get_milvus_client(
                 host=settings.milvus_host,
-                port=settings.milvus_port
+                port=settings.milvus_port,
+                collection_name=settings.milvus_collection,
+                dimension=dimension
             )
-            self.collection = Collection(settings.milvus_collection)
-            self.collection.load()
+            self.collection_name = settings.milvus_collection
 
             logger.info(
                 f"Milvus 连接成功 - Collection: {settings.milvus_collection}"
@@ -139,12 +144,12 @@ class RAGService:
         }
 
         try:
-            results = self.collection.search(
+            results = self.milvus_client.search(
+                collection_name=self.collection_name,
                 data=[query_vector],
-                anns_field="vector",
-                param=search_params,
-                limit=top_k * 5 if use_rerank else top_k * 2,  # 精排需要更多候选，先多取一些
-                output_fields=["content", "metadata", "scene_type"]
+                limit=top_k * 5 if use_rerank else top_k * 2,
+                output_fields=["content", "metadata", "scene_type"],
+                search_params={"metric_type": settings.retrieval_metric_type}
             )
         except Exception as e:
             logger.error(f"Milvus 检索失败: {e}", exc_info=True)
@@ -155,7 +160,8 @@ class RAGService:
         # 转换为统一格式
         vector_docs = []
         for hit in results[0]:
-            metadata = hit.entity.get("metadata", "{}")
+            entity = hit.get("entity", hit)
+            metadata = entity.get("metadata", "{}")
             if isinstance(metadata, str):
                 import json
                 try:
@@ -163,11 +169,11 @@ class RAGService:
                 except:
                     metadata = {}
             vector_docs.append({
-                "content": hit.entity.get("content"),
+                "content": entity.get("content"),
                 "metadata": metadata,
-                "scene_type": hit.entity.get("scene_type"),
-                "score": hit.score,
-                "id": hit.id
+                "scene_type": entity.get("scene_type"),
+                "score": hit.get("distance", 0),
+                "id": hit.get("id")
             })
 
         # 过滤 scene_type
