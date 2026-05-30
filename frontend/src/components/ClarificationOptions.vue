@@ -1,8 +1,9 @@
 <template>
   <div class="clarification-options">
     <div class="clarification-header">
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor">
-        <path d="M9 1a8 8 0 100 16A8 8 0 009 1zm0 14.5a6.5 6.5 0 110-13 6.5 6.5 0 010 13zM9 4a1 1 0 00-1 1v3.5a1 1 0 102 0V5a1 1 0 00-1-1zm0 7a1 1 0 011 1v.5a1 1 0 11-2 0v-.5a1 1 0 011-1z"/>
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.2"/>
+        <path d="M8 5v3.5M8 10.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
       </svg>
       <span>请选择您想查询的方面：</span>
     </div>
@@ -21,23 +22,16 @@
 
 <script setup>
 const props = defineProps({
-  options: {
-    type: Array,
-    required: true
-  }
+  options: { type: Array, required: true }
 })
-
 const emit = defineEmits(['select'])
-
-const handleSelect = (option) => {
-  emit('select', option)
-}
+const handleSelect = (option) => emit('select', option)
 </script>
 
 <style scoped>
 .clarification-options {
-  background: linear-gradient(135deg, #fffbe6 0%, #fff7e6 100%);
-  border: 1px solid #ffe58f;
+  background: var(--bg-card);
+  border: 1px solid rgba(245, 158, 11, 0.2);
   border-radius: 16px 16px 16px 4px;
   padding: 14px 18px;
 }
@@ -47,7 +41,7 @@ const handleSelect = (option) => {
   align-items: center;
   gap: 8px;
   margin-bottom: 12px;
-  color: #ad6800;
+  color: #f59e0b;
   font-size: 14px;
   font-weight: 500;
 }
@@ -59,21 +53,21 @@ const handleSelect = (option) => {
 }
 
 .option-btn {
-  padding: 8px 16px;
-  background: white;
-  border: 1px solid #ffe58f;
+  padding: 7px 16px;
+  background: var(--bg-surface);
+  border: 1px solid rgba(245, 158, 11, 0.15);
   border-radius: 20px;
   cursor: pointer;
-  font-size: 14px;
-  color: #8c6d1f;
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
   transition: all 0.2s;
 }
 
 .option-btn:hover {
-  background: #1890ff;
-  border-color: #1890ff;
-  color: white;
+  background: rgba(245, 158, 11, 0.1);
+  border-color: var(--accent-simulation);
+  color: var(--accent-simulation);
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.2);
 }
 </style>

@@ -1,23 +1,16 @@
 <template>
   <div class="api-settings">
-    <div class="header">
+    <header class="header">
       <router-link to="/" class="back-btn">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-          <path d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"/>
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <path d="M12 4L6 9l6 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </router-link>
-      <div class="logo">
-        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-          <rect width="32" height="32" rx="8" fill="#52c41a"/>
-          <path d="M10 16a6 6 0 1112 0 6 6 0 01-12 0zm6-3a3 3 0 100 6 3 3 0 000-6z" fill="white"/>
-          <path d="M10 22h12M16 19v6" stroke="white" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-      </div>
       <div class="title-group">
         <h1>API 设置</h1>
-        <span class="subtitle">配置大语言模型 API</span>
+        <span class="subtitle">配置大语言模型服务</span>
       </div>
-    </div>
+    </header>
 
     <div class="content">
       <div class="settings-card">
@@ -32,135 +25,79 @@
         </div>
       </div>
 
-      <!-- MiniMax 配置 -->
       <div v-if="form.llm_provider === 'minimax'" class="settings-card">
         <h2>MiniMax API</h2>
         <div class="form-group">
           <label>API Key</label>
-          <input
-            v-model="form.minimax_api_key"
-            type="password"
-            placeholder="sk-..."
-            class="text-input"
-          />
+          <input v-model="form.minimax_api_key" type="password" placeholder="sk-..." class="text-input" />
           <span class="hint">从 MiniMax 控制台获取 API Key</span>
         </div>
         <div class="form-group">
           <label>API Base URL</label>
-          <input
-            v-model="form.minimax_api_base"
-            type="text"
-            placeholder="https://api.minimax.chat/v1"
-            class="text-input"
-          />
+          <input v-model="form.minimax_api_base" type="text" placeholder="https://api.minimax.chat/v1" class="text-input" />
         </div>
         <div class="form-group">
           <label>模型名称</label>
-          <input
-            v-model="form.minimax_model"
-            type="text"
-            placeholder="MiniMax-M2.7-highspeed"
-            class="text-input"
-          />
+          <input v-model="form.minimax_model" type="text" placeholder="MiniMax-M2.7-highspeed" class="text-input" />
         </div>
       </div>
 
-      <!-- OpenAI 配置 -->
       <div v-if="form.llm_provider === 'openai'" class="settings-card">
         <h2>OpenAI API</h2>
         <div class="form-group">
           <label>API Key</label>
-          <input
-            v-model="form.openai_api_key"
-            type="password"
-            placeholder="sk-..."
-            class="text-input"
-          />
+          <input v-model="form.openai_api_key" type="password" placeholder="sk-..." class="text-input" />
         </div>
         <div class="form-group">
           <label>API Base URL</label>
-          <input
-            v-model="form.openai_api_base"
-            type="text"
-            placeholder="https://api.openai.com/v1"
-            class="text-input"
-          />
+          <input v-model="form.openai_api_base" type="text" placeholder="https://api.openai.com/v1" class="text-input" />
         </div>
         <div class="form-group">
           <label>模型名称</label>
-          <input
-            v-model="form.openai_model"
-            type="text"
-            placeholder="gpt-4-turbo-preview"
-            class="text-input"
-          />
+          <input v-model="form.openai_model" type="text" placeholder="gpt-4-turbo-preview" class="text-input" />
         </div>
         <div class="form-row">
           <div class="form-group">
             <label>Temperature</label>
-            <input
-              v-model.number="form.openai_temperature"
-              type="number"
-              min="0"
-              max="2"
-              step="0.1"
-              class="text-input small"
-            />
+            <input v-model.number="form.openai_temperature" type="number" min="0" max="2" step="0.1" class="text-input small" />
           </div>
           <div class="form-group">
             <label>Max Tokens</label>
-            <input
-              v-model.number="form.openai_max_tokens"
-              type="number"
-              min="1"
-              max="32000"
-              class="text-input small"
-            />
+            <input v-model.number="form.openai_max_tokens" type="number" min="1" max="32000" class="text-input small" />
           </div>
         </div>
       </div>
 
-      <!-- 本地 LLM 配置 -->
       <div v-if="form.llm_provider === 'local'" class="settings-card">
         <h2>本地 LLM</h2>
         <div class="form-group">
           <label>API Base URL</label>
-          <input
-            v-model="form.local_llm_base_url"
-            type="text"
-            placeholder="http://localhost:11434"
-            class="text-input"
-          />
+          <input v-model="form.local_llm_base_url" type="text" placeholder="http://localhost:11434" class="text-input" />
         </div>
         <div class="form-group">
           <label>模型名称</label>
-          <input
-            v-model="form.local_llm_model"
-            type="text"
-            placeholder="qwen2.5:72b"
-            class="text-input"
-          />
+          <input v-model="form.local_llm_model" type="text" placeholder="qwen2.5:72b" class="text-input" />
         </div>
       </div>
 
       <div v-if="error" class="error-banner">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-          <path d="M10 0C4.48 0 0 4.48 0 10s4.48 10 10 10 10-4.48 10-10S15.52 0 10 0zm1 15H9v-2h2v2zm0-4H9V5h2v6z"/>
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.2"/>
+          <path d="M9 6v3M9 11.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
         <span>{{ error }}</span>
       </div>
 
       <div v-if="success" class="success-banner">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-          <path d="M10 0C4.48 0 0 4.48 0 10s4.48 10 10 10 10-4.48 10-10S15.52 0 10 0zm-2 15l-5-5 1.41-1.41L8 12.17l7.59-7.59L17 6l-9 9z"/>
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.2"/>
+          <path d="M6 9l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         <span>配置已保存到 .env 文件</span>
       </div>
 
       <div class="actions">
-        <button @click="loadSettings" class="btn secondary" :disabled="loading">
-          重置
-        </button>
+        <button @click="loadSettings" class="btn secondary" :disabled="loading">重置</button>
         <button @click="saveSettings" class="btn primary" :disabled="loading">
           {{ loading ? '保存中...' : '保存配置' }}
         </button>
@@ -197,6 +134,12 @@ const fieldsByProvider = {
   local: ['llm_provider', 'local_llm_base_url', 'local_llm_model'],
 }
 
+const requiredByProvider = {
+  minimax: ['minimax_api_key'],
+  openai: ['openai_api_key'],
+  local: ['local_llm_base_url', 'local_llm_model'],
+}
+
 const loadSettings = async () => {
   loading.value = true
   error.value = null
@@ -221,12 +164,6 @@ const loadSettings = async () => {
   }
 }
 
-const requiredByProvider = {
-  minimax: ['minimax_api_key'],
-  openai: ['openai_api_key'],
-  local: ['local_llm_base_url', 'local_llm_model'],
-}
-
 const validate = () => {
   const provider = form.llm_provider
   const required = requiredByProvider[provider] || []
@@ -236,12 +173,8 @@ const validate = () => {
     }
   }
   if (provider === 'openai') {
-    if (form.openai_temperature < 0 || form.openai_temperature > 2) {
-      return 'Temperature 必须在 0-2 之间'
-    }
-    if (form.openai_max_tokens < 1 || form.openai_max_tokens > 32000) {
-      return 'Max Tokens 必须在 1-32000 之间'
-    }
+    if (form.openai_temperature < 0 || form.openai_temperature > 2) return 'Temperature 必须在 0-2 之间'
+    if (form.openai_max_tokens < 1 || form.openai_max_tokens > 32000) return 'Max Tokens 必须在 1-32000 之间'
   }
   return null
 }
@@ -249,23 +182,13 @@ const validate = () => {
 const saveSettings = async () => {
   error.value = null
   success.value = false
-
   const validationError = validate()
-  if (validationError) {
-    error.value = validationError
-    return
-  }
-
+  if (validationError) { error.value = validationError; return }
   loading.value = true
-
   const provider = form.llm_provider
   const fields = fieldsByProvider[provider] || fieldsByProvider.minimax
-
   const updates = {}
-  for (const key of fields) {
-    updates[key] = form[key]
-  }
-
+  for (const key of fields) { updates[key] = form[key] }
   try {
     await updateLlmSettings(updates)
     success.value = true
@@ -277,29 +200,29 @@ const saveSettings = async () => {
   }
 }
 
-onMounted(() => {
-  loadSettings()
-})
+onMounted(() => loadSettings())
 </script>
 
 <style scoped>
 .api-settings {
-  max-width: 680px;
+  max-width: 640px;
   margin: 0 auto;
   padding: 0;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  position: relative;
+  z-index: 1;
 }
 
 .header {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 20px 32px;
-  background: rgba(255, 255, 255, 0.8);
+  padding: 16px 24px;
+  background: rgba(14, 19, 34, 0.8);
   backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid var(--border-subtle);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -309,55 +232,59 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border-radius: 10px;
-  color: #666;
+  color: var(--text-muted);
   transition: all 0.2s;
 }
 
 .back-btn:hover {
-  background: #f5f5f5;
-  color: #333;
+  background: var(--bg-hover);
+  color: var(--text-secondary);
 }
 
 .title-group h1 {
-  font-size: 18px;
+  font-family: var(--font-display);
+  font-size: 17px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text-primary);
   margin: 0;
+  letter-spacing: -0.01em;
 }
 
 .subtitle {
-  font-size: 13px;
-  color: #8c8c8c;
+  font-size: 12px;
+  color: var(--text-muted);
 }
 
 .content {
-  padding: 32px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
 .settings-card {
-  background: white;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 20px;
 }
 
 .settings-card h2 {
-  font-size: 16px;
+  font-family: var(--font-display);
+  font-size: 14px;
   font-weight: 600;
-  color: #1a1a1a;
-  margin: 0 0 20px 0;
+  color: var(--text-primary);
+  margin: 0 0 16px;
   padding-bottom: 12px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border-subtle);
+  letter-spacing: -0.01em;
 }
 
 .form-group {
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .form-group:last-child {
@@ -366,27 +293,32 @@ onMounted(() => {
 
 .form-group label {
   display: block;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
-  color: #333;
+  color: var(--text-secondary);
   margin-bottom: 6px;
 }
 
 .text-input {
   width: 100%;
   padding: 10px 14px;
-  border: 1px solid #e8e8e8;
+  border: 1px solid var(--border-subtle);
   border-radius: 10px;
   font-size: 14px;
-  color: #333;
+  color: var(--text-primary);
+  background: var(--bg-surface);
   transition: all 0.2s;
-  background: white;
+  font-family: var(--font-body);
 }
 
 .text-input:focus {
   outline: none;
-  border-color: #1890ff;
-  box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.1);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--glow);
+}
+
+.text-input::placeholder {
+  color: var(--text-muted);
 }
 
 .text-input.small {
@@ -396,29 +328,30 @@ onMounted(() => {
 .select-input {
   width: 100%;
   padding: 10px 14px;
-  border: 1px solid #e8e8e8;
+  border: 1px solid var(--border-subtle);
   border-radius: 10px;
   font-size: 14px;
-  color: #333;
-  background: white;
+  color: var(--text-primary);
+  background: var(--bg-surface);
   cursor: pointer;
+  font-family: var(--font-body);
 }
 
 .select-input:focus {
   outline: none;
-  border-color: #1890ff;
+  border-color: var(--accent);
 }
 
 .hint {
   display: block;
-  font-size: 12px;
-  color: #8c8c8c;
+  font-size: 11px;
+  color: var(--text-muted);
   margin-top: 4px;
 }
 
 .form-row {
   display: flex;
-  gap: 16px;
+  gap: 14px;
 }
 
 .form-row .form-group {
@@ -430,26 +363,26 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 14px 18px;
-  border-radius: 12px;
-  font-size: 14px;
-  animation: slideIn 0.3s ease;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  animation: fadeSlideIn 0.3s ease;
 }
 
 .error-banner {
-  background: #fff2f0;
-  border: 1px solid #ffccc7;
-  color: #ff4d4f;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #ef4444;
 }
 
 .success-banner {
-  background: #f6ffed;
-  border: 1px solid #b7eb8f;
-  color: #52c41a;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: #10b981;
 }
 
-@keyframes slideIn {
-  from { opacity: 0; transform: translateY(-10px); }
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(-8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -457,41 +390,43 @@ onMounted(() => {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  padding-top: 8px;
+  padding-top: 4px;
 }
 
 .btn {
-  padding: 10px 24px;
+  padding: 10px 22px;
   border-radius: 10px;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
   border: none;
+  font-family: var(--font-display);
 }
 
 .btn:disabled {
-  opacity: 0.6;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
 .btn.primary {
-  background: #1890ff;
-  color: white;
+  background: var(--accent);
+  color: var(--bg-base);
 }
 
 .btn.primary:hover:not(:disabled) {
-  background: #096dd9;
+  filter: brightness(1.15);
+  box-shadow: 0 4px 16px var(--glow);
 }
 
 .btn.secondary {
-  background: white;
-  color: #333;
-  border: 1px solid #e8e8e8;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
 }
 
 .btn.secondary:hover:not(:disabled) {
-  border-color: #1890ff;
-  color: #1890ff;
+  border-color: var(--border-default);
+  color: var(--text-primary);
 }
 </style>

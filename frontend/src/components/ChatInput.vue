@@ -12,11 +12,12 @@
       :disabled="disabled || !inputText.trim()"
       class="send-btn"
     >
-      <svg v-if="!disabled" width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-        <path d="M2 18L20 10L2 2V8L14 10L2 12V18Z"/>
+      <svg v-if="!disabled" width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <path d="M2 16L16 9L2 2v6l10 1L2 10v6z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
       </svg>
-      <svg v-else width="20" height="20" viewBox="0 0 20 20" fill="currentColor" class="spin">
-        <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm0 14a6 6 0 110-12 6 6 0 010 12z"/>
+      <svg v-else width="18" height="18" viewBox="0 0 18 18" fill="none" class="spin">
+        <circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="2" opacity="0.3"/>
+        <path d="M16 9a7 7 0 00-7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
       </svg>
     </button>
   </div>
@@ -26,20 +27,15 @@
 import { ref } from 'vue'
 
 const props = defineProps({
-  disabled: {
-    type: Boolean,
-    default: false
-  }
+  disabled: { type: Boolean, default: false }
 })
 
 const emit = defineEmits(['send'])
-
 const inputText = ref('')
 
 const handleSend = () => {
   const text = inputText.value.trim()
   if (!text || props.disabled) return
-
   emit('send', text)
   inputText.value = ''
 }
@@ -54,39 +50,41 @@ const handleSend = () => {
 
 .chat-input textarea {
   flex: 1;
-  padding: 14px 16px;
-  border: 1px solid #e8e8e8;
-  border-radius: 24px;
+  padding: 14px 18px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
   font-size: 15px;
   resize: none;
-  font-family: inherit;
-  background: #f5f7fa;
+  font-family: var(--font-body);
+  background: var(--bg-surface);
+  color: var(--text-primary);
   transition: all 0.2s;
+  line-height: 1.5;
 }
 
 .chat-input textarea:focus {
   outline: none;
-  border-color: #1890ff;
-  background: white;
-  box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.1);
+  border-color: var(--accent);
+  background: var(--bg-card);
+  box-shadow: 0 0 0 3px var(--glow);
 }
 
 .chat-input textarea:disabled {
-  background: #f0f0f0;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
 .chat-input textarea::placeholder {
-  color: #bfbfbf;
+  color: var(--text-muted);
 }
 
 .send-btn {
   width: 48px;
   height: 48px;
-  background: #1890ff;
-  color: white;
+  background: var(--accent);
+  color: var(--bg-base);
   border: none;
-  border-radius: 50%;
+  border-radius: 12px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -96,17 +94,18 @@ const handleSend = () => {
 }
 
 .send-btn:hover:not(:disabled) {
-  background: #40a9ff;
-  transform: scale(1.05);
+  filter: brightness(1.15);
+  transform: scale(1.04);
+  box-shadow: 0 4px 16px var(--glow);
+}
+
+.send-btn:active:not(:disabled) {
+  transform: scale(0.96);
 }
 
 .send-btn:disabled {
-  background: #d9d9d9;
+  opacity: 0.3;
   cursor: not-allowed;
-}
-
-.send-btn:disabled svg {
-  opacity: 0.5;
 }
 
 .spin {

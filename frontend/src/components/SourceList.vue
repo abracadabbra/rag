@@ -1,24 +1,19 @@
 <template>
   <div class="source-list">
     <div class="source-header">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-        <path d="M2 2h12v12H2V2zm1 1v10h10V3H3z"/>
-        <path d="M5 5h6v1H5V5zm0 2h6v1H5V7zm0 2h4v1H5V9z"/>
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <rect x="1" y="1" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.2"/>
+        <path d="M4 4h6v1H4V4zm0 3h6v1H4V7zm0 3h4v1H4v-1z" fill="currentColor"/>
       </svg>
       <span class="source-label">来源文档</span>
       <span class="source-count">({{ sources.length }})</span>
       <div v-if="metadata" class="retrieval-info">
         <span v-if="metadata.used_bm25" class="meta-tag bm25">BM25</span>
         <span v-if="metadata.used_rerank" class="meta-tag rerank">精排</span>
-        <span class="meta-count">向量{{ metadata.vector_count }} / BM25{{ metadata.bm25_count }}</span>
       </div>
     </div>
     <div class="source-items">
-      <div
-        v-for="(source, index) in sources"
-        :key="index"
-        class="source-item"
-      >
+      <div v-for="(source, index) in sources" :key="index" class="source-item">
         <div class="source-top">
           <div class="source-tags">
             <span v-if="source.rule_id" class="tag rule-id">{{ source.rule_id }}</span>
@@ -29,16 +24,12 @@
           </div>
           <div class="score-badge">
             <span class="score-value">{{ (source.score * 100).toFixed(0) }}%</span>
-            <span class="score-label">匹配</span>
           </div>
         </div>
         <div class="source-preview">{{ source.content_preview }}</div>
       </div>
     </div>
     <div v-if="sources.length === 0" class="no-sources">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-      </svg>
       <span>未找到相关文档</span>
     </div>
   </div>
@@ -46,14 +37,8 @@
 
 <script setup>
 defineProps({
-  sources: {
-    type: Array,
-    default: () => []
-  },
-  metadata: {
-    type: Object,
-    default: null
-  }
+  sources: { type: Array, default: () => [] },
+  metadata: { type: Object, default: null }
 })
 
 function sourceTypeLabel(type) {
@@ -64,11 +49,11 @@ function sourceTypeLabel(type) {
 
 <style scoped>
 .source-list {
-  margin-top: 12px;
-  background: #fafbfc;
+  margin-top: 10px;
+  background: var(--bg-surface);
   border-radius: 12px;
-  padding: 12px 16px;
-  border: 1px solid #f0f0f0;
+  padding: 12px 14px;
+  border: 1px solid var(--border-subtle);
 }
 
 .source-header {
@@ -76,8 +61,8 @@ function sourceTypeLabel(type) {
   align-items: center;
   gap: 6px;
   margin-bottom: 10px;
-  color: #8c8c8c;
-  font-size: 13px;
+  color: var(--text-muted);
+  font-size: 12px;
   flex-wrap: wrap;
 }
 
@@ -86,7 +71,7 @@ function sourceTypeLabel(type) {
 }
 
 .source-count {
-  color: #bfbfbf;
+  opacity: 0.6;
 }
 
 .retrieval-info {
@@ -97,57 +82,41 @@ function sourceTypeLabel(type) {
 }
 
 .meta-tag {
-  font-size: 11px;
+  font-size: 10px;
   padding: 2px 6px;
   border-radius: 4px;
   font-weight: 500;
 }
 
 .meta-tag.bm25 {
-  background: #fff7e6;
-  color: #fa8c16;
-  border: 1px solid #ffd591;
+  background: rgba(245, 158, 11, 0.12);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.2);
 }
 
 .meta-tag.rerank {
-  background: #f6ffed;
-  color: #52c41a;
-  border: 1px solid #b7eb8f;
-}
-
-.meta-count {
-  font-size: 11px;
-  color: #8c8c8c;
-}
-
-.tag.source-type {
-  background: #f0f0f0;
-  color: #666;
-}
-
-.tag.source-type.rerank {
-  background: #f6ffed;
-  color: #52c41a;
-  border: 1px solid #b7eb8f;
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.2);
 }
 
 .source-items {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .source-item {
-  background: white;
-  border: 1px solid #e8e8e8;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
   border-radius: 8px;
   padding: 10px 12px;
   transition: all 0.2s;
 }
 
 .source-item:hover {
-  border-color: #1890ff;
-  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.1);
+  border-color: var(--glow);
+  box-shadow: 0 2px 12px var(--glow);
 }
 
 .source-top {
@@ -160,48 +129,49 @@ function sourceTypeLabel(type) {
 .source-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 4px;
 }
 
 .tag {
-  font-size: 12px;
+  font-size: 11px;
   padding: 2px 8px;
   border-radius: 4px;
   font-weight: 500;
 }
 
 .rule-id {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: var(--glow);
+  color: var(--accent);
 }
 
 .rule-name {
-  background: #f0f7ff;
-  color: #1890ff;
-  border: 1px solid #d9e8ff;
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+}
+
+.tag.source-type {
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+}
+
+.tag.source-type.rerank {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
 }
 
 .score-badge {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
   flex-shrink: 0;
 }
 
 .score-value {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  color: #52c41a;
-}
-
-.score-label {
-  font-size: 10px;
-  color: #8c8c8c;
+  color: var(--accent);
 }
 
 .source-preview {
-  color: #666;
-  font-size: 13px;
+  color: var(--text-muted);
+  font-size: 12px;
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -213,13 +183,8 @@ function sourceTypeLabel(type) {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
   padding: 16px;
-  color: #bfbfbf;
-  font-size: 14px;
-}
-
-.no-sources svg {
-  opacity: 0.5;
+  color: var(--text-muted);
+  font-size: 13px;
 }
 </style>

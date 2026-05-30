@@ -1,6 +1,5 @@
 <template>
   <div class="risk-rules-qa">
-    <!-- 会话侧边栏 -->
     <SessionSidebar
       :isOpen="sidebarOpen"
       :currentSessionId="sessionId"
@@ -11,36 +10,30 @@
       ref="sidebar"
     />
 
-    <div class="header">
+    <header class="header">
       <div class="header-left">
         <button @click="sidebarOpen = true" class="menu-btn">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M2 4h16v2H2V4zm0 5h16v2H2V9zm0 5h16v2H2v-2z"/>
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M2 4h14M2 9h14M2 14h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
           </svg>
         </button>
         <router-link to="/" class="back-btn">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"/>
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M12 4L6 9l6 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </router-link>
-        <div class="logo">
-          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-            <rect width="32" height="32" rx="8" fill="#1890ff"/>
-            <path d="M8 16h16M16 8v16" stroke="white" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-        </div>
         <div class="title-group">
-          <h1>风控规则问答</h1>
+          <h1>风控规则</h1>
           <span class="subtitle">智能检索风控政策与规则</span>
         </div>
       </div>
       <button @click="resetSession" class="new-chat-btn">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-          <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M7 2v10M2 7h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
         新建会话
       </button>
-    </div>
+    </header>
 
     <div class="status-bar">
       <div class="status-item" :class="{ connected: apiConnected }">
@@ -56,12 +49,12 @@
     <div class="messages" ref="messagesContainer">
       <div v-if="messages.length === 0" class="welcome">
         <div class="welcome-icon">
-          <svg width="72" height="72" viewBox="0 0 72 72" fill="none">
-            <circle cx="36" cy="36" r="34" stroke="#e8e8e8" stroke-width="2"/>
-            <path d="M22 36h28M36 22v28" stroke="#1890ff" stroke-width="3" stroke-linecap="round"/>
+          <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+            <circle cx="32" cy="32" r="30" stroke="currentColor" stroke-width="1" opacity="0.15"/>
+            <path d="M20 32h24M32 20v24" stroke="#d4a843" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
           </svg>
         </div>
-        <h2>欢迎使用风控规则问答</h2>
+        <h2>风控规则问答</h2>
         <p>我可以帮您查询风控政策、制度与各类规则信息</p>
         <div class="suggestions">
           <button v-for="q in suggestions" :key="q" @click="handleSend(q)" class="suggestion-btn">
@@ -74,11 +67,7 @@
         <div v-for="(msg, index) in messages" :key="index" class="message-wrapper" :class="msg.role">
           <div class="avatar">
             <div v-if="msg.role === 'user'" class="user-avatar">U</div>
-            <div v-else class="ai-avatar">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="white">
-                <path d="M10 2L3 7v11h14V7l-7-5zm0 2.5L14.5 7H5.5L10 4.5z"/>
-              </svg>
-            </div>
+            <div v-else class="ai-avatar">AI</div>
           </div>
           <div class="message-content">
             <div v-if="msg.role === 'user'" class="user-bubble">
@@ -94,11 +83,7 @@
 
       <div v-if="clarificationOptions.length > 0" class="message-wrapper assistant">
         <div class="avatar">
-          <div class="ai-avatar">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="white">
-              <path d="M10 2L3 7v11h14V7l-7-5zm0 2.5L14.5 7H5.5L10 4.5z"/>
-            </svg>
-          </div>
+          <div class="ai-avatar">AI</div>
         </div>
         <div class="message-content">
           <ClarificationOptions :options="clarificationOptions" @select="handleClarificationSelect" />
@@ -107,11 +92,7 @@
 
       <div v-if="loading" class="message-wrapper assistant">
         <div class="avatar">
-          <div class="ai-avatar">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="white">
-              <path d="M10 2L3 7v11h14V7l-7-5zm0 2.5L14.5 7H5.5L10 4.5z"/>
-            </svg>
-          </div>
+          <div class="ai-avatar">AI</div>
         </div>
         <div class="message-content">
           <div class="loading-bubble">
@@ -123,8 +104,9 @@
       </div>
 
       <div v-if="error" class="error-banner">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-          <path d="M10 0C4.48 0 0 4.48 0 10s4.48 10 10 10 10-4.48 10-10S15.52 0 10 0zm1 15H9v-2h2v2zm0-4H9V5h2v6z"/>
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.2"/>
+          <path d="M9 6v3M9 11.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
         <span>{{ error }}</span>
       </div>
@@ -181,23 +163,13 @@ watch(messages, () => {
 
 const handleSend = async (query) => {
   if (loading.value) return
-
   error.value = null
   clarificationOptions.value = []
-
-  messages.value.push({
-    role: 'user',
-    content: query
-  })
-
+  messages.value.push({ role: 'user', content: query })
   loading.value = true
 
   try {
-    const result = await queryRiskRules({
-      query,
-      session_id: sessionId.value
-    })
-
+    const result = await queryRiskRules({ query, session_id: sessionId.value })
     sessionId.value = result.session_id
     apiConnected.value = true
 
@@ -223,16 +195,9 @@ const handleSend = async (query) => {
 
 const handleClarificationSelect = async (selectedOption) => {
   if (!clarificationOptions.value.length) return
-
   clarificationOptions.value = []
-
   try {
-    const result = await queryRiskRules({
-      query: '',
-      session_id: sessionId.value,
-      clarification_choice: selectedOption
-    })
-
+    const result = await queryRiskRules({ query: '', session_id: sessionId.value, clarification_choice: selectedOption })
     messages.value.push({
       role: 'assistant',
       answer: result.answer,
@@ -254,13 +219,10 @@ const resetSession = () => {
 
 const handleSelectSession = async (newSessionId) => {
   if (!newSessionId) return
-
   sessionId.value = newSessionId
   sidebarOpen.value = false
   messages.value = []
   clarificationOptions.value = []
-
-  // 加载历史消息
   try {
     const session = await getSession(newSessionId)
     if (session && session.messages) {
@@ -268,12 +230,7 @@ const handleSelectSession = async (newSessionId) => {
         if (msg.role === 'user') {
           messages.value.push({ role: 'user', content: msg.content })
         } else if (msg.role === 'assistant') {
-          messages.value.push({
-            role: 'assistant',
-            answer: msg.content,
-            sources: [],
-            retrieved_count: 0
-          })
+          messages.value.push({ role: 'assistant', answer: msg.content, sources: [], retrieved_count: 0 })
         }
       }
     }
@@ -291,22 +248,24 @@ const handleSessionCreated = (newSessionId) => {
 
 <style scoped>
 .risk-rules-qa {
-  max-width: 1000px;
+  max-width: 960px;
   margin: 0 auto;
   padding: 0;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  position: relative;
+  z-index: 1;
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 32px;
-  background: rgba(255, 255, 255, 0.8);
+  padding: 16px 24px;
+  background: rgba(14, 19, 34, 0.8);
   backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid var(--border-subtle);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -315,131 +274,118 @@ const handleSessionCreated = (newSessionId) => {
 .header-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
-.back-btn {
+.back-btn, .menu-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border-radius: 10px;
-  color: #666;
-  transition: all 0.2s;
-}
-
-.back-btn:hover {
-  background: #f5f5f5;
-  color: #333;
-}
-
-.menu-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  color: var(--text-muted);
   background: none;
   border: none;
-  color: #666;
   cursor: pointer;
   transition: all 0.2s;
 }
 
-.menu-btn:hover {
-  background: #f5f5f5;
-  color: #333;
-}
-
-.logo {
-  flex-shrink: 0;
+.back-btn:hover, .menu-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
 }
 
 .title-group h1 {
-  font-size: 18px;
+  font-family: var(--font-display);
+  font-size: 17px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text-primary);
   margin: 0;
+  letter-spacing: -0.01em;
 }
 
 .subtitle {
-  font-size: 13px;
-  color: #8c8c8c;
+  font-size: 12px;
+  color: var(--text-muted);
 }
 
 .new-chat-btn {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 10px 18px;
-  background: white;
-  border: 1px solid #e8e8e8;
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
   border-radius: 10px;
   cursor: pointer;
-  font-size: 14px;
-  color: #333;
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-family: var(--font-display);
+  font-weight: 500;
   transition: all 0.2s;
 }
 
 .new-chat-btn:hover {
-  border-color: #1890ff;
-  color: #1890ff;
+  border-color: var(--glow);
+  color: var(--accent);
+  background: var(--accent-dim);
 }
 
 .status-bar {
   display: flex;
   align-items: center;
-  gap: 24px;
-  padding: 12px 32px;
-  background: rgba(255, 255, 255, 0.5);
-  font-size: 13px;
+  gap: 20px;
+  padding: 8px 24px;
+  font-size: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(8, 12, 24, 0.5);
 }
 
 .status-item {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #8c8c8c;
+  color: var(--text-muted);
 }
 
 .status-item.connected {
-  color: #52c41a;
+  color: #10b981;
 }
 
 .status-dot {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: #d9d9d9;
+  background: var(--text-muted);
 }
 
 .status-item.connected .status-dot {
-  background: #52c41a;
+  background: #10b981;
   animation: pulse 2s infinite;
 }
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  50% { opacity: 0.4; }
 }
 
 .session-label {
-  color: #8c8c8c;
+  color: var(--text-muted);
 }
 
 .session-id {
-  font-family: monospace;
-  background: #f5f5f5;
-  padding: 2px 8px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  background: var(--bg-hover);
+  padding: 1px 6px;
   border-radius: 4px;
+  font-size: 11px;
 }
 
 .messages {
   flex: 1;
   overflow-y: auto;
-  padding: 32px;
+  padding: 28px 24px;
   display: flex;
   flex-direction: column;
 }
@@ -447,53 +393,59 @@ const handleSessionCreated = (newSessionId) => {
 .messages-list {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
 }
 
 .welcome {
   text-align: center;
-  padding: 80px 20px;
+  padding: 60px 20px;
   animation: fadeIn 0.5s ease;
 }
 
 .welcome-icon {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
+  opacity: 0.6;
 }
 
 .welcome h2 {
-  font-size: 24px;
-  color: #1a1a1a;
-  margin: 0 0 12px 0;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 10px;
+  letter-spacing: -0.01em;
 }
 
 .welcome p {
-  font-size: 15px;
-  color: #666;
-  margin: 0 0 32px 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0 0 28px;
 }
 
 .suggestions {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 10px;
   justify-content: center;
 }
 
 .suggestion-btn {
-  padding: 12px 24px;
-  background: white;
-  border: 1px solid #e8e8e8;
-  border-radius: 24px;
-  font-size: 14px;
-  color: #333;
+  padding: 10px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  font-size: 13px;
+  color: var(--text-secondary);
   cursor: pointer;
+  font-family: var(--font-body);
   transition: all 0.2s;
 }
 
 .suggestion-btn:hover {
-  border-color: #1890ff;
-  color: #1890ff;
-  transform: translateY(-2px);
+  border-color: var(--glow);
+  color: var(--accent);
+  background: var(--accent-dim);
+  transform: translateY(-1px);
 }
 
 .message-wrapper {
@@ -511,26 +463,26 @@ const handleSessionCreated = (newSessionId) => {
   flex-shrink: 0;
 }
 
-.user-avatar,
-.ai-avatar {
-  width: 36px;
-  height: 36px;
+.user-avatar, .ai-avatar {
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-display);
 }
 
 .user-avatar {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   color: white;
 }
 
 .ai-avatar {
-  background: linear-gradient(135deg, #1890ff 0%, #0050b3 100%);
-  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+  background: linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 80%, black) 100%);
+  color: var(--bg-base);
 }
 
 .message-content {
@@ -538,32 +490,32 @@ const handleSessionCreated = (newSessionId) => {
 }
 
 .user-bubble {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   color: white;
-  padding: 14px 18px;
-  border-radius: 20px 20px 6px 20px;
+  padding: 12px 18px;
+  border-radius: 18px 18px 6px 18px;
   font-size: 15px;
   line-height: 1.5;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.2);
 }
 
 .loading-bubble {
-  background: white;
-  padding: 18px 28px;
-  border-radius: 20px 20px 20px 6px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  background: var(--bg-card);
+  padding: 16px 24px;
+  border-radius: 18px 18px 18px 4px;
+  border: 1px solid var(--border-subtle);
 }
 
 .loading-dots {
   display: flex;
-  gap: 4px;
+  gap: 5px;
 }
 
 .loading-dots span {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #1890ff;
+  background: var(--accent);
   animation: bounce 1.4s infinite ease-in-out both;
 }
 
@@ -580,60 +532,46 @@ const handleSessionCreated = (newSessionId) => {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* 消息过渡动画 */
 .message-enter-active {
   animation: slideIn 0.3s ease;
 }
-
 .message-leave-active {
   animation: slideOut 0.2s ease;
 }
 
 @keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes slideOut {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-10px); }
 }
 
 .error-banner {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 14px 18px;
-  background: #fff2f0;
-  border: 1px solid #ffccc7;
-  border-radius: 12px;
-  color: #ff4d4f;
-  font-size: 14px;
-  animation: shake 0.5s ease;
+  padding: 12px 16px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 10px;
+  color: #ef4444;
+  font-size: 13px;
+  animation: shake 0.4s ease;
 }
 
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
 }
 
 .input-area {
-  padding: 20px 32px 28px;
-  background: rgba(255, 255, 255, 0.8);
+  padding: 16px 24px 20px;
+  background: rgba(14, 19, 34, 0.8);
   backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  border-top: 1px solid var(--border-subtle);
 }
 </style>
