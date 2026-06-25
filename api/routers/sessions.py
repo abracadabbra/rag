@@ -165,7 +165,8 @@ async def get_session(session_id: str):
                 {
                     "role": m.role,
                     "content": m.content,
-                    "timestamp": m.timestamp
+                    "timestamp": m.timestamp,
+                    "metadata": m.metadata,
                 }
                 for m in state.messages
             ],

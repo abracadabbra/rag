@@ -6,38 +6,49 @@
 
 ## Overview
 
-**注意**：本项目目前没有前端代码，以下是规划的状态管理方案。
-
-计划使用 **React Context + Hooks** 管理全局状态，**React Query** 管理服务端状态。
+The current frontend uses Vue local component state. There is no global store.
 
 ---
 
 ## State Categories
 
-- **Local State** - 组件内部状态（`useState`）
-- **Global State** - 跨组件共享状态（React Context）
-- **Server State** - 服务端数据（React Query）
-- **URL State** - 路由参数（React Router）
+- Local UI state: `ref` / `computed` in Vue components.
+- Server state: loaded through `frontend/src/services/api.js`.
+- Route state: Vue Router in `frontend/src/main.js`.
+- Session state: backend session id stored in the active QA component.
 
 ---
 
-## When to Use Global State
+## Scene QA State
 
-- 用户认证信息
-- 当前会话 ID
-- 主题设置
+`QAView.vue` owns the active scene conversation state:
+
+- `sessionId`
+- `messages`
+- `loading`
+- `error`
+- clarification state
+- sidebar open/close state
+
+Scene views should pass configuration props into `QAView` instead of owning chat state.
 
 ---
 
-## Server State
+## Business Tool State
 
-使用 React Query 管理：
-- 自动缓存
-- 自动重新获取
-- 乐观更新
+Tool data is display state, not a separate frontend source of truth.
+
+- Backend sends `tool_calls` and `tool_intent`.
+- `QAView.vue` stores those fields on assistant messages.
+- Missing-field clarification keeps temporary input state only until the user submits it.
+- Restored session history must read `tool_calls` and `tool_intent` from each
+  assistant message's own `metadata`; do not infer historical tool cards from
+  session-level metadata.
 
 ---
 
 ## Common Mistakes
 
-（待前端开发后补充）
+- Do not create a global store for one scene unless multiple unrelated components need the same state.
+- Do not infer tool execution client-side; render backend `tool_intent` and `tool_calls`.
+- Clear pending clarification state when sending a new query, resetting the session, or switching sessions.

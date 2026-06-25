@@ -2,11 +2,18 @@
 会话管理器测试
 """
 
-import pytest
 import time
+
+import pytest
+from fastapi.testclient import TestClient
+
 import api.services.session_manager as session_manager_module
+from api.main import app
 from api.services.session_manager import SessionManager, get_session_manager
 from tests.fakes import FakeRedis
+
+
+client = TestClient(app)
 
 
 @pytest.fixture
@@ -71,6 +78,38 @@ def test_add_message(session_manager):
     assert state.messages[1].role == "assistant"
 
 
+def test_add_message_stores_message_level_metadata(session_manager):
+    """测试消息级元数据不会被会话级最新元数据污染"""
+    session_id = session_manager.create_session()
+
+    session_manager.add_message(
+        session_id=session_id,
+        role="assistant",
+        content="第一次回答",
+        metadata={
+            "tool_calls": [{"name": "get_risk_event_detail"}],
+            "tool_intent": {"tool_name": "get_risk_event_detail"},
+        },
+    )
+    session_manager.add_message(
+        session_id=session_id,
+        role="assistant",
+        content="第二次回答",
+        metadata={
+            "tool_calls": [{"name": "get_profit_chain_detail"}],
+            "tool_intent": {"tool_name": "get_profit_chain_detail"},
+        },
+    )
+
+    state = session_manager.get_session(session_id)
+
+    assert state.metadata["tool_intent"]["tool_name"] == "get_profit_chain_detail"
+    assert state.messages[0].metadata["tool_calls"][0]["name"] == "get_risk_event_detail"
+    assert state.messages[0].metadata["tool_intent"]["tool_name"] == "get_risk_event_detail"
+    assert state.messages[1].metadata["tool_calls"][0]["name"] == "get_profit_chain_detail"
+    assert state.messages[1].metadata["tool_intent"]["tool_name"] == "get_profit_chain_detail"
+
+
 def test_conversation_history(session_manager):
     """测试对话历史"""
     session_id = session_manager.create_session()
@@ -121,6 +160,32 @@ def test_update_metadata(session_manager):
     state = session_manager.get_session(session_id)
     assert state.metadata["extra"] == "value"
     assert state.metadata["user_id"] == "user123"  # 原有数据保留
+
+
+def test_get_session_endpoint_returns_message_level_metadata(monkeypatch):
+    """测试会话详情接口返回每条消息自己的元数据"""
+    manager = SessionManager(redis_client=FakeRedis())
+    session_id = manager.create_session("metadata-session")
+    manager.add_message(
+        session_id=session_id,
+        role="assistant",
+        content="风控回答",
+        metadata={"tool_calls": [{"name": "get_risk_event_detail"}]},
+    )
+    manager.add_message(
+        session_id=session_id,
+        role="assistant",
+        content="毛利回答",
+        metadata={"tool_calls": [{"name": "get_profit_chain_detail"}]},
+    )
+    monkeypatch.setattr("api.routers.sessions.get_session_manager", lambda: manager)
+
+    response = client.get(f"/api/v1/sessions/{session_id}")
+
+    assert response.status_code == 200
+    messages = response.json()["messages"]
+    assert messages[0]["metadata"]["tool_calls"][0]["name"] == "get_risk_event_detail"
+    assert messages[1]["metadata"]["tool_calls"][0]["name"] == "get_profit_chain_detail"
 
 
 def test_delete_session(session_manager):

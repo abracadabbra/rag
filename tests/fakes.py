@@ -31,6 +31,26 @@ class FakeRedis:
         self.store[key] = value
         self.expiry[key] = time.time() + ttl
 
+    def hset(self, key, field, value):
+        self._is_expired(key)
+        bucket = self.store.setdefault(key, {})
+        bucket[field] = value
+        return 1
+
+    def hgetall(self, key):
+        if self._is_expired(key):
+            return {}
+        return dict(self.store.get(key, {}))
+
+    def hdel(self, key, field):
+        if self._is_expired(key):
+            return 0
+        bucket = self.store.get(key)
+        if not isinstance(bucket, dict) or field not in bucket:
+            return 0
+        bucket.pop(field, None)
+        return 1
+
     def expire(self, key, ttl):
         if self._is_expired(key) or key not in self.store:
             return False

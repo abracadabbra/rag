@@ -52,7 +52,7 @@ function sourceTypeLabel(type) {
   margin-top: 10px;
   background: var(--bg-surface);
   border-radius: 12px;
-  padding: 12px 14px;
+  padding: 14px 16px;
   border: 1px solid var(--border-subtle);
 }
 
@@ -60,10 +60,11 @@ function sourceTypeLabel(type) {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   color: var(--text-muted);
   font-size: 12px;
   flex-wrap: wrap;
+  font-family: var(--font-display);
 }
 
 .source-label {
@@ -82,6 +83,7 @@ function sourceTypeLabel(type) {
 }
 
 .meta-tag {
+  font-family: var(--font-mono);
   font-size: 10px;
   padding: 2px 6px;
   border-radius: 4px;
@@ -110,13 +112,32 @@ function sourceTypeLabel(type) {
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: 8px;
-  padding: 10px 12px;
-  transition: all 0.2s;
+  padding: 10px 12px 10px 16px;
+  transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  position: relative;
+  overflow: hidden;
+}
+
+.source-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--accent);
+  opacity: 0.2;
+  transition: opacity 0.2s;
 }
 
 .source-item:hover {
   border-color: var(--glow);
   box-shadow: 0 2px 12px var(--glow);
+}
+
+.source-item:hover::before {
+  opacity: 0.6;
 }
 
 .source-top {
@@ -164,6 +185,7 @@ function sourceTypeLabel(type) {
 }
 
 .score-value {
+  font-family: var(--font-mono);
   font-size: 13px;
   font-weight: 600;
   color: var(--accent);

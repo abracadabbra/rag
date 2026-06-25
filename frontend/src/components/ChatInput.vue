@@ -58,7 +58,7 @@ const handleSend = () => {
   font-family: var(--font-body);
   background: var(--bg-surface);
   color: var(--text-primary);
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   line-height: 1.5;
 }
 
@@ -66,7 +66,7 @@ const handleSend = () => {
   outline: none;
   border-color: var(--accent);
   background: var(--bg-card);
-  box-shadow: 0 0 0 3px var(--glow);
+  box-shadow: 0 0 0 3px var(--glow), 0 0 20px var(--glow);
 }
 
 .chat-input textarea:disabled {
@@ -89,7 +89,7 @@ const handleSend = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   flex-shrink: 0;
 }
 

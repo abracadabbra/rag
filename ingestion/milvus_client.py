@@ -21,7 +21,8 @@ def get_milvus_client(
     host: str = "localhost",
     port: int = 19530,
     collection_name: str = "unified_docs",
-    dimension: int = 384
+    dimension: int = 384,
+    timeout: Optional[float] = None,
 ) -> MilvusClient:
     """
     获取 MilvusClient 实例（单例）
@@ -34,7 +35,7 @@ def get_milvus_client(
 
     # 尝试连接 Milvus Server
     try:
-        client = MilvusClient(uri=f"http://{host}:{port}")
+        client = MilvusClient(uri=f"http://{host}:{port}", timeout=timeout)
         client.list_collections()
         logger.info(f"Milvus Server 连接成功: {host}:{port}")
         _ensure_collection(client, collection_name, dimension)
@@ -44,7 +45,7 @@ def get_milvus_client(
         logger.warning(f"Milvus Server 连接失败 ({e})，回退到 Milvus Lite")
 
     # 回退到 Milvus Lite
-    client = MilvusClient(uri=MILVUS_LITE_DB)
+    client = MilvusClient(uri=MILVUS_LITE_DB, timeout=timeout)
     logger.info(f"Milvus Lite 模式: {MILVUS_LITE_DB}")
     _ensure_collection(client, collection_name, dimension)
     _client = client

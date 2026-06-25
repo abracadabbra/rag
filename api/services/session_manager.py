@@ -6,7 +6,7 @@
 import logging
 import uuid
 from typing import Optional, Dict, Any, List
-from datetime import datetime
+from datetime import datetime, timezone
 
 from pydantic import BaseModel, Field
 
@@ -25,6 +25,7 @@ class Message(BaseModel):
     role: str  # user / assistant
     content: str
     timestamp: str
+    metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
 class SessionState(BaseModel):
@@ -78,7 +79,7 @@ class SessionManager:
         if not session_id:
             session_id = str(uuid.uuid4())
 
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         state = SessionState(
             session_id=session_id,
             messages=[],
@@ -146,7 +147,8 @@ class SessionManager:
         message = Message(
             role=role,
             content=content,
-            timestamp=datetime.utcnow().isoformat()
+            timestamp=datetime.now(timezone.utc).isoformat(),
+            metadata=metadata or {},
         )
         state.messages.append(message)
 
@@ -155,7 +157,7 @@ class SessionManager:
             state.metadata.update(metadata)
 
         # 更新时间戳
-        state.updated_at = datetime.utcnow().isoformat()
+        state.updated_at = datetime.now(timezone.utc).isoformat()
 
         # 保存状态
         self._save_state(session_id, state)
@@ -187,7 +189,7 @@ class SessionManager:
             return False
 
         state.metadata.update(metadata)
-        state.updated_at = datetime.utcnow().isoformat()
+        state.updated_at = datetime.now(timezone.utc).isoformat()
 
         self._save_state(session_id, state)
         logger.debug(f"更新元数据 - session_id: {session_id}, metadata: {metadata}")
@@ -341,7 +343,7 @@ class SessionManager:
             return False
 
         state.metadata["title"] = title
-        state.updated_at = datetime.utcnow().isoformat()
+        state.updated_at = datetime.now(timezone.utc).isoformat()
         self._save_state(session_id, state)
         self._add_to_index(session_id, state)
         return True

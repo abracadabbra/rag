@@ -3,6 +3,7 @@ Embedding 生成模块
 支持 BGE-M3 本地部署和 OpenAI Embedding API
 """
 
+import hashlib
 from typing import List, Optional
 import numpy as np
 from functools import lru_cache
@@ -188,6 +189,38 @@ class OpenAIEmbedding(EmbeddingGenerator):
         return response.data[0].embedding
 
 
+class DeterministicEmbedding(EmbeddingGenerator):
+    """确定性本地 Embedding，仅用于离线开发和 CI smoke 检查。"""
+
+    def __init__(self, dimension: int = 384):
+        if dimension <= 0:
+            raise ValueError("Deterministic embedding dimension must be positive")
+        self.dimension = dimension
+        print(f"✅ Deterministic Embedding 初始化完成: dim={dimension}")
+
+    def embed_documents(self, texts: List[str]) -> List[List[float]]:
+        """批量生成稳定的本地向量。"""
+        return [self._embed_text(text) for text in texts]
+
+    def embed_query(self, text: str) -> List[float]:
+        """生成稳定的查询向量。"""
+        return self._embed_text(text)
+
+    def _embed_text(self, text: str) -> List[float]:
+        seed = hashlib.sha256(str(text or "").encode("utf-8")).digest()
+        values = []
+        counter = 0
+        while len(values) < self.dimension:
+            digest = hashlib.sha256(seed + counter.to_bytes(4, "big")).digest()
+            values.extend((byte / 127.5) - 1.0 for byte in digest)
+            counter += 1
+        vector = values[: self.dimension]
+        norm = sum(value * value for value in vector) ** 0.5
+        if not norm:
+            return [0.0] * self.dimension
+        return [value / norm for value in vector]
+
+
 @lru_cache()
 def get_embedding_generator() -> EmbeddingGenerator:
     """
@@ -196,6 +229,10 @@ def get_embedding_generator() -> EmbeddingGenerator:
     Returns:
         Embedding 生成器实例
     """
+    if settings.use_deterministic_embedding:
+        return DeterministicEmbedding(
+            dimension=settings.deterministic_embedding_dimension
+        )
     if settings.use_sentence_transformer:
         return SentenceTransformerEmbedding(
             model_name=settings.sentence_transformer_model,

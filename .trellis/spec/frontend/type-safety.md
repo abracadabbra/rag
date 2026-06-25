@@ -1,43 +1,50 @@
 # Type Safety
 
-> Type safety patterns in this project.
+> Data-shape safety patterns in this project.
 
 ---
 
 ## Overview
 
-**注意**：本项目目前没有前端代码，以下是规划的类型安全规范。
+The current frontend is JavaScript, not TypeScript. Runtime data contracts are
+primarily enforced by backend Pydantic schemas and service-level validation.
 
-使用 **TypeScript** 进行类型检查。
+Frontend code should still read optional response fields defensively.
 
 ---
 
-## Type Organization
+## API Contract Handling
 
+- Keep API response parsing in `frontend/src/services/api.js`.
+- Components should handle missing arrays with `|| []`.
+- Components should handle missing objects with `|| null`.
+- Numeric formatting helpers should return the original value when the value is not a number.
+
+Example:
+
+```js
+messages.value[msgIndex].tool_calls = data.tool_calls || []
+messages.value[msgIndex].tool_intent = data.tool_intent || null
 ```
-src/types/
-├── api.ts        # API 请求/响应类型
-└── models.ts     # 数据模型类型
-```
 
 ---
 
-## Validation
+## Business Tool Fields
 
-计划使用 **Zod** 进行运行时验证。
+For business tools, the backend contract is documented in
+`docs/BUSINESS_TOOLS.md`.
+
+Frontend display should treat these fields as optional:
+
+- `tool_calls`
+- `tool_intent`
+- `retrieval_metadata`
+- `result.chain`
 
 ---
 
-## Common Patterns
+## Common Mistakes
 
-- 使用接口定义对象类型
-- 使用类型别名定义联合类型
-- 避免使用 `any`
-
----
-
-## Forbidden Patterns
-
-- ❌ 使用 `any`
-- ❌ 使用 `as` 类型断言（除非必要）
-- ❌ 忽略 TypeScript 错误（`@ts-ignore`）
+- Do not assume SSE events arrive with every optional field populated.
+- Do not call `.map` or `.length` on fields before confirming they are arrays.
+- Do not duplicate backend validation in the frontend; show safe fallbacks instead.

@@ -16,6 +16,13 @@
 示例：
 - `R001_信用卡交易限额.md`
 - `R002_取现限额.pdf`
+- `R020_订单风控事件解释口径.md`
+
+## 导入命令
+
+```bash
+python -m ingestion.ingest --source data/risk_rules --scene risk_rule
+```
 
 ## 详细说明
 

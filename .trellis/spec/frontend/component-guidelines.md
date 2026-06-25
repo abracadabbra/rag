@@ -6,73 +6,73 @@
 
 ## Overview
 
-**注意**：本项目目前没有前端代码，以下是规划的组件规范。
-
-计划使用 **React 18+ with TypeScript**，采用函数组件 + Hooks 模式。
+Frontend components are Vue 3 single-file components using `<script setup>`.
 
 ---
 
 ## Component Structure
 
-```tsx
-// 标准组件结构
-import React from 'react';
+```vue
+<template>
+  <section class="example-panel">
+    <button @click="handleSubmit">提交</button>
+  </section>
+</template>
 
-// 1. Props 接口定义
-interface ChatWindowProps {
-  sessionId: string | null;
-  onSendMessage: (message: string) => void;
+<script setup>
+import { ref } from 'vue'
+
+const props = defineProps({
+  disabled: { type: Boolean, default: false }
+})
+
+const emit = defineEmits(['submit'])
+const value = ref('')
+
+const handleSubmit = () => {
+  if (props.disabled) return
+  emit('submit', value.value)
 }
+</script>
 
-// 2. 组件实现
-export const ChatWindow: React.FC<ChatWindowProps> = ({ 
-  sessionId, 
-  onSendMessage 
-}) => {
-  // 3. Hooks
-  const [message, setMessage] = useState('');
-  
-  // 4. 事件处理函数
-  const handleSubmit = () => {
-    onSendMessage(message);
-    setMessage('');
-  };
-  
-  // 5. 渲染
-  return (
-    <div>
-      {/* JSX */}
-    </div>
-  );
-};
+<style scoped>
+.example-panel {
+  border: 1px solid var(--border-subtle);
+}
+</style>
 ```
 
 ---
 
-## Props Conventions
+## Props And Events
 
-- 使用 TypeScript 接口定义 Props
-- Props 接口命名：`<ComponentName>Props`
-- 必需的 props 不使用 `?`
-- 可选的 props 使用 `?`
-- 回调函数命名：`on<Event>`（例如：`onSendMessage`）
+- Define props with `defineProps`.
+- Define events with `defineEmits`.
+- Name handlers as `handle<Event>`.
+- Keep scene-specific display text in the scene view props when possible.
+- Keep shared chat behavior in `QAView.vue`.
 
 ---
 
-## Styling Patterns
+## Styling
 
-待定（计划使用 CSS Modules 或 Tailwind CSS）
+- Use scoped CSS in components.
+- Reuse global variables from `App.vue` such as `--bg-card`, `--text-primary`, and `--accent`.
+- Keep cards at modest radius unless matching an existing component.
+- For scene colors, prefer the existing scene variables instead of hard-coding a new palette.
 
 ---
 
 ## Accessibility
 
-- 使用语义化 HTML 标签
-- 添加 ARIA 属性
-- 支持键盘导航
+- Use semantic buttons, forms, and inputs.
+- Add `aria-label` when an input has no visible label.
+- Preserve keyboard submit behavior for chat and clarification forms.
 
 ---
 
 ## Common Mistakes
 
-（待前端开发后补充）
+- Do not duplicate the full QA flow in each scene view.
+- Do not add component-local API clients; use `frontend/src/services/api.js`.
+- Do not assume every clarification is an option list; order-level tool clarification can require typed input.

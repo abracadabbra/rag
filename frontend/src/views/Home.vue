@@ -1,158 +1,235 @@
 <template>
   <div class="home">
     <div class="hero">
-      <div class="hero-badge">INTELLIGENT RAG SYSTEM</div>
+      <div class="hero-badge">
+        <span class="badge-dot"></span>
+        INTELLIGENT RAG SYSTEM
+      </div>
       <h1 class="hero-title">
         <span class="title-line">风控知识</span>
         <span class="title-line accent">智能问答</span>
       </h1>
       <p class="hero-desc">基于检索增强生成，为您解答风控政策、规则与业务问题</p>
-      <div class="hero-glow"></div>
+      <div class="hero-typing">
+        <span class="typing-text">{{ typedText }}</span>
+        <span class="typing-cursor">|</span>
+      </div>
     </div>
 
     <div class="scene-grid">
-      <router-link to="/risk-rules" class="scene-card card-risk" style="--delay: 0">
+      <router-link
+        v-for="(card, i) in cards"
+        :key="card.route"
+        :to="card.route"
+        class="scene-card"
+        :class="card.class"
+        :style="{ '--delay': i, '--accent-c': card.accent }"
+        @mouseenter="onCardEnter($event)"
+        @mouseleave="onCardLeave($event)"
+      >
+        <div class="card-stripe"></div>
         <div class="card-glow"></div>
-        <div class="card-icon">
-          <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
-            <rect x="4" y="4" width="36" height="36" rx="10" stroke="currentColor" stroke-width="1.5"/>
-            <path d="M16 22h12M22 16v12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-        </div>
-        <h2 class="card-title">风控规则</h2>
-        <p class="card-desc">查询风控政策、制度与规则信息</p>
-        <div class="card-tags">
-          <span>政策查询</span>
-          <span>规则解读</span>
-          <span>合规建议</span>
-        </div>
-        <div class="card-arrow">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M5 10h10M12 7l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-      </router-link>
-
-      <router-link to="/model-cards" class="scene-card card-model" style="--delay: 1">
-        <div class="card-glow"></div>
-        <div class="card-icon">
-          <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
-            <rect x="4" y="4" width="36" height="36" rx="10" stroke="currentColor" stroke-width="1.5"/>
-            <rect x="12" y="12" width="20" height="20" rx="4" stroke="currentColor" stroke-width="1.5" fill="none"/>
-            <circle cx="22" cy="22" r="5" stroke="currentColor" stroke-width="1.5" fill="none"/>
-          </svg>
-        </div>
-        <h2 class="card-title">模型卡片</h2>
-        <p class="card-desc">查询模型部署、特征与适用场景</p>
-        <div class="card-tags">
-          <span>部署信息</span>
-          <span>模型特征</span>
-          <span>选型建议</span>
-        </div>
-        <div class="card-arrow">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M5 10h10M12 7l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-      </router-link>
-
-      <router-link to="/simulation" class="scene-card card-simulation" style="--delay: 2">
-        <div class="card-glow"></div>
-        <div class="card-icon">
-          <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
-            <rect x="4" y="4" width="36" height="36" rx="10" stroke="currentColor" stroke-width="1.5"/>
-            <path d="M14 30V20l8-6 8 6v10" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
-            <circle cx="22" cy="24" r="3" stroke="currentColor" stroke-width="1.5" fill="none"/>
-          </svg>
-        </div>
-        <h2 class="card-title">仿真解读</h2>
-        <p class="card-desc">解读仿真结果与分析模型表现</p>
-        <div class="card-tags">
-          <span>结果分析</span>
-          <span>性能对比</span>
-          <span>数据洞察</span>
-        </div>
-        <div class="card-arrow">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M5 10h10M12 7l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-      </router-link>
-
-      <router-link to="/profit" class="scene-card card-profit" style="--delay: 3">
-        <div class="card-glow"></div>
-        <div class="card-icon">
-          <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
-            <rect x="4" y="4" width="36" height="36" rx="10" stroke="currentColor" stroke-width="1.5"/>
-            <path d="M22 14v16M16 18l6-6 6 6M16 26l6 6 6-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-        <h2 class="card-title">毛利抽成</h2>
-        <p class="card-desc">查询分成比例与结算规则</p>
-        <div class="card-tags">
-          <span>分成比例</span>
-          <span>结算规则</span>
-          <span>收益分析</span>
-        </div>
-        <div class="card-arrow">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M5 10h10M12 7l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
+        <div class="card-body">
+          <div class="card-icon" v-html="card.icon"></div>
+          <div class="card-content">
+            <h2 class="card-title">{{ card.title }}</h2>
+            <p class="card-desc">{{ card.desc }}</p>
+            <div class="card-tags">
+              <span v-for="tag in card.tags" :key="tag">{{ tag }}</span>
+            </div>
+          </div>
+          <div class="card-right">
+            <div class="card-stat">
+              <span class="stat-value">{{ card.stat }}</span>
+              <span class="stat-label">{{ card.statLabel }}</span>
+            </div>
+            <div class="card-arrow">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M5 10h10M12 7l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+          </div>
         </div>
       </router-link>
     </div>
 
     <div class="bottom-hint">
-      <span class="hint-dot"></span>
-      选择一个场景开始探索
+      <span class="hint-pulse"></span>
+      <span>选择一个场景开始探索</span>
+      <span class="hint-time">{{ currentTime }}</span>
     </div>
   </div>
 </template>
 
 <script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
+
+const cards = [
+  {
+    route: '/risk-rules',
+    class: 'card-risk',
+    accent: 'var(--accent-risk)',
+    title: '风控规则',
+    desc: '查询风控政策、制度与规则信息',
+    tags: ['政策查询', '规则解读', '合规建议'],
+    stat: '2.4k',
+    statLabel: '规则条目',
+    icon: `<svg width="52" height="52" viewBox="0 0 36 36" fill="none"><rect x="3" y="3" width="30" height="30" rx="8" stroke="currentColor" stroke-width="1.2"/><path d="M12 18h12M18 12v12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`
+  },
+  {
+    route: '/model-cards',
+    class: 'card-model',
+    accent: 'var(--accent-model)',
+    title: '模型卡片',
+    desc: '查询模型部署、特征与适用场景',
+    tags: ['部署信息', '模型特征', '选型建议'],
+    stat: '18',
+    statLabel: '模型实例',
+    icon: `<svg width="52" height="52" viewBox="0 0 36 36" fill="none"><rect x="3" y="3" width="30" height="30" rx="8" stroke="currentColor" stroke-width="1.2"/><rect x="10" y="10" width="16" height="16" rx="3" stroke="currentColor" stroke-width="1.2" fill="none"/><circle cx="18" cy="18" r="4" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>`
+  },
+  {
+    route: '/simulation',
+    class: 'card-simulation',
+    accent: 'var(--accent-simulation)',
+    title: '仿真解读',
+    desc: '解读仿真结果与分析模型表现',
+    tags: ['结果分析', '性能对比', '数据洞察'],
+    stat: '96%',
+    statLabel: '准确率',
+    icon: `<svg width="52" height="52" viewBox="0 0 36 36" fill="none"><rect x="3" y="3" width="30" height="30" rx="8" stroke="currentColor" stroke-width="1.2"/><path d="M11 25V16l7-5 7 5v9" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linejoin="round"/><circle cx="18" cy="20" r="2.5" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>`
+  },
+  {
+    route: '/profit',
+    class: 'card-profit',
+    accent: 'var(--accent-profit)',
+    title: '毛利抽成',
+    desc: '查询分成比例与结算规则',
+    tags: ['分成比例', '结算规则', '收益分析'],
+    stat: '¥8.6M',
+    statLabel: '月均结算',
+    icon: `<svg width="52" height="52" viewBox="0 0 36 36" fill="none"><rect x="3" y="3" width="30" height="30" rx="8" stroke="currentColor" stroke-width="1.2"/><path d="M18 11v14M13 15l5-5 5 5M13 22l5 5 5-5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+  }
+]
+
+const typingPhrases = [
+  '正在分析风控策略...',
+  '模型推理就绪，等待输入...',
+  '仿真引擎加载完成',
+  '毛利计算服务运行中'
+]
+
+const typedText = ref('')
+const currentTime = ref('')
+let phraseIndex = 0
+let charIndex = 0
+let typingTimer = null
+let timeTimer = null
+
+function typeNext() {
+  const phrase = typingPhrases[phraseIndex]
+  if (charIndex <= phrase.length) {
+    typedText.value = phrase.slice(0, charIndex)
+    charIndex++
+    typingTimer = setTimeout(typeNext, 60 + Math.random() * 40)
+  } else {
+    typingTimer = setTimeout(() => {
+      charIndex = 0
+      phraseIndex = (phraseIndex + 1) % typingPhrases.length
+      typedText.value = ''
+      typeNext()
+    }, 2000)
+  }
+}
+
+function updateTime() {
+  const now = new Date()
+  currentTime.value = now.toLocaleTimeString('zh-CN', { hour12: false })
+}
+
+function onCardEnter(e) {
+  const card = e.currentTarget
+  card.addEventListener('mousemove', onCardMove)
+}
+
+function onCardLeave(e) {
+  const card = e.currentTarget
+  card.removeEventListener('mousemove', onCardMove)
+  card.style.transform = ''
+}
+
+function onCardMove(e) {
+  const card = e.currentTarget
+  const rect = card.getBoundingClientRect()
+  const x = e.clientX - rect.left - rect.width / 2
+  const y = e.clientY - rect.top - rect.height / 2
+  card.style.transform = `translateY(-4px) perspective(800px) rotateX(${-y * 0.01}deg) rotateY(${x * 0.01}deg)`
+}
+
+onMounted(() => {
+  typeNext()
+  updateTime()
+  timeTimer = setInterval(updateTime, 1000)
+})
+
+onUnmounted(() => {
+  clearTimeout(typingTimer)
+  clearInterval(timeTimer)
+})
 </script>
 
 <style scoped>
 .home {
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 60px 40px 40px;
+  padding: 56px 40px 40px;
   position: relative;
   z-index: 1;
   flex: 1;
 }
 
+/* ── Hero ── */
 .hero {
   text-align: center;
-  margin-bottom: 64px;
+  margin-bottom: 56px;
   position: relative;
-  animation: fadeUp 0.8s ease;
+  animation: fadeUp 0.7s ease;
 }
 
 .hero-badge {
-  display: inline-block;
-  font-family: var(--font-display);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'DM Sans', sans-serif;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 3px;
   color: var(--accent);
   background: var(--accent-dim);
-  padding: 6px 16px;
+  padding: 6px 18px 6px 14px;
   border-radius: 20px;
   margin-bottom: 24px;
   border: 1px solid var(--glow);
 }
 
+.badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulse 2s infinite;
+  box-shadow: 0 0 8px var(--glow);
+}
+
 .hero-title {
-  font-family: var(--font-display);
+  font-family: 'DM Sans', sans-serif;
   font-size: 52px;
   font-weight: 700;
-  line-height: 1.15;
-  margin-bottom: 20px;
+  line-height: 1.1;
+  margin-bottom: 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 0;
 }
 
 .title-line {
@@ -161,31 +238,35 @@
 }
 
 .title-line.accent {
-  background: linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 70%, white) 50%, var(--accent) 100%);
+  background: linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 60%, white) 50%, var(--accent) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .hero-desc {
-  font-size: 16px;
+  font-size: 15px;
   color: var(--text-secondary);
-  max-width: 500px;
-  margin: 0 auto;
+  max-width: 460px;
+  margin: 0 auto 16px;
+  line-height: 1.6;
 }
 
-.hero-glow {
-  position: absolute;
-  width: 500px;
-  height: 500px;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--glow) 0%, transparent 60%);
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
+.hero-typing {
+  font-family: 'JetBrains Mono', 'SF Mono', monospace;
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+  min-height: 20px;
 }
 
+.typing-cursor {
+  animation: blink 1s step-end infinite;
+  color: var(--accent);
+  font-weight: 300;
+}
+
+/* ── Cards ── */
 .scene-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -195,89 +276,98 @@
 .scene-card {
   position: relative;
   display: flex;
-  flex-direction: column;
-  padding: 32px 28px;
+  align-items: stretch;
+  padding: 0;
   background: var(--bg-card);
-  border-radius: 16px;
+  border-radius: 14px;
   border: 1px solid var(--border-subtle);
-  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   overflow: hidden;
-  animation: fadeUp 0.6s ease backwards;
-  animation-delay: calc(var(--delay) * 0.1s + 0.3s);
+  animation: fadeUp 0.5s ease backwards;
+  animation-delay: calc(var(--delay) * 0.08s + 0.25s);
+  will-change: transform;
 }
 
 .scene-card:hover {
-  transform: translateY(-4px);
   border-color: var(--border-default);
   background: var(--bg-elevated);
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.25);
 }
 
-.card-risk:hover {
-  box-shadow: 0 8px 40px rgba(212, 168, 67, 0.08);
+/* Left accent stripe */
+.card-stripe {
+  position: absolute;
+  left: 0;
+  top: 14px;
+  bottom: 14px;
+  width: 4px;
+  border-radius: 0 3px 3px 0;
+  background: var(--accent-c);
+  opacity: 0.3;
+  transition: opacity 0.3s, top 0.3s, bottom 0.3s;
 }
-.card-model:hover {
-  box-shadow: 0 8px 40px rgba(124, 58, 237, 0.08);
-}
-.card-simulation:hover {
-  box-shadow: 0 8px 40px rgba(245, 158, 11, 0.08);
-}
-.card-profit:hover {
-  box-shadow: 0 8px 40px rgba(16, 185, 129, 0.08);
+
+.scene-card:hover .card-stripe {
+  opacity: 1;
+  top: 8px;
+  bottom: 8px;
 }
 
 .card-glow {
   position: absolute;
-  top: -50%;
-  right: -50%;
-  width: 200px;
-  height: 200px;
+  top: -60%;
+  right: -10%;
+  width: 240px;
+  height: 240px;
   border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent-c) 10%, transparent) 0%, transparent 60%);
   pointer-events: none;
   opacity: 0;
-  transition: opacity 0.4s ease;
-}
-
-.card-risk .card-glow {
-  background: radial-gradient(circle, rgba(212, 168, 67, 0.08) 0%, transparent 60%);
-}
-.card-model .card-glow {
-  background: radial-gradient(circle, rgba(124, 58, 237, 0.08) 0%, transparent 60%);
-}
-.card-simulation .card-glow {
-  background: radial-gradient(circle, rgba(245, 158, 11, 0.08) 0%, transparent 60%);
-}
-.card-profit .card-glow {
-  background: radial-gradient(circle, rgba(16, 185, 129, 0.08) 0%, transparent 60%);
+  transition: opacity 0.5s ease;
 }
 
 .scene-card:hover .card-glow {
   opacity: 1;
 }
 
-.card-icon {
-  color: var(--text-muted);
-  margin-bottom: 20px;
-  transition: color 0.3s ease;
+.card-body {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  padding: 36px 36px 36px 42px;
+  position: relative;
+  z-index: 1;
 }
 
-.card-risk:hover .card-icon { color: var(--accent-risk); }
-.card-model:hover .card-icon { color: var(--accent-model); }
-.card-simulation:hover .card-icon { color: var(--accent-simulation); }
-.card-profit:hover .card-icon { color: var(--accent-profit); }
+.card-icon {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  transition: color 0.3s;
+}
+
+.scene-card:hover .card-icon {
+  color: var(--accent-c);
+}
+
+.card-content {
+  flex: 1;
+  min-width: 0;
+}
 
 .card-title {
-  font-family: var(--font-display);
-  font-size: 20px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 22px;
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   letter-spacing: -0.01em;
 }
 
 .card-desc {
-  font-size: 14px;
+  font-size: 15px;
   color: var(--text-secondary);
-  margin-bottom: 16px;
+  margin-bottom: 12px;
+  line-height: 1.5;
 }
 
 .card-tags {
@@ -287,74 +377,100 @@
 }
 
 .card-tags span {
-  font-size: 11px;
-  padding: 3px 10px;
+  font-size: 13px;
+  padding: 4px 12px;
   border-radius: 10px;
   color: var(--text-muted);
   border: 1px solid var(--border-subtle);
+  transition: all 0.3s;
 }
 
-.card-risk:hover .card-tags span {
-  border-color: rgba(212, 168, 67, 0.2);
-  color: var(--accent-risk);
+.scene-card:hover .card-tags span {
+  border-color: color-mix(in srgb, var(--accent-c) 25%, transparent);
+  color: var(--accent-c);
+  background: color-mix(in srgb, var(--accent-c) 5%, transparent);
 }
-.card-model:hover .card-tags span {
-  border-color: rgba(124, 58, 237, 0.2);
-  color: var(--accent-model);
+
+.card-right {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 28px;
 }
-.card-simulation:hover .card-tags span {
-  border-color: rgba(245, 158, 11, 0.2);
-  color: var(--accent-simulation);
+
+.card-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
 }
-.card-profit:hover .card-tags span {
-  border-color: rgba(16, 185, 129, 0.2);
-  color: var(--accent-profit);
+
+.stat-value {
+  font-family: 'JetBrains Mono', 'SF Mono', monospace;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: -0.02em;
+  transition: color 0.3s;
+}
+
+.scene-card:hover .stat-value {
+  color: var(--accent-c);
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
 }
 
 .card-arrow {
-  position: absolute;
-  bottom: 28px;
-  right: 28px;
   color: var(--text-muted);
   opacity: 0;
-  transform: translateX(-8px);
+  transform: translateX(-6px);
   transition: all 0.3s ease;
 }
 
 .scene-card:hover .card-arrow {
   opacity: 1;
   transform: translateX(0);
+  color: var(--accent-c);
 }
 
-.card-risk:hover .card-arrow { color: var(--accent-risk); }
-.card-model:hover .card-arrow { color: var(--accent-model); }
-.card-simulation:hover .card-arrow { color: var(--accent-simulation); }
-.card-profit:hover .card-arrow { color: var(--accent-profit); }
-
+/* ── Bottom hint ── */
 .bottom-hint {
   text-align: center;
-  margin-top: 60px;
+  margin-top: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  font-size: 13px;
+  gap: 10px;
+  font-size: 12px;
   color: var(--text-muted);
-  animation: fadeUp 0.6s ease 0.8s backwards;
+  animation: fadeUp 0.6s ease 0.7s backwards;
 }
 
-.hint-dot {
+.hint-pulse {
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: var(--accent);
+  background: #10b981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
   animation: pulse 2s infinite;
 }
 
+.hint-time {
+  font-family: 'JetBrains Mono', 'SF Mono', monospace;
+  font-size: 11px;
+  opacity: 0.5;
+  margin-left: 4px;
+}
+
+/* ── Animations ── */
 @keyframes fadeUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
@@ -367,10 +483,17 @@
   50% { opacity: 0.3; }
 }
 
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
 @media (max-width: 768px) {
-  .home { padding: 40px 20px; }
+  .home { padding: 36px 20px; }
   .hero-title { font-size: 36px; }
-  .scene-grid { grid-template-columns: 1fr; }
-  .scene-card { padding: 24px 20px; }
+  .scene-grid { grid-template-columns: 1fr; gap: 14px; }
+  .card-body { padding: 22px 20px; gap: 16px; }
+  .card-right { display: none; }
+  .card-icon svg { width: 36px; height: 36px; }
+  .hero-typing { display: none; }
 }
 </style>

@@ -1,10 +1,4 @@
 <template>
-  <Teleport to="body">
-    <Transition name="overlay">
-      <div v-if="isOpen" class="sidebar-overlay" @click="$emit('close')"></div>
-    </Transition>
-  </Teleport>
-
   <aside class="session-sidebar" :class="{ open: isOpen }">
     <div class="sidebar-header">
       <h3>会话列表</h3>
@@ -209,41 +203,16 @@ defineExpose({ loadSessions })
 </script>
 
 <style scoped>
-.sidebar-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 199;
-}
-
-.overlay-enter-active,
-.overlay-leave-active {
-  transition: opacity 0.3s ease;
-}
-.overlay-enter-from,
-.overlay-leave-to {
-  opacity: 0;
-}
-
 .session-sidebar {
-  position: fixed;
-  left: 0;
-  top: 0;
-  bottom: 0;
   width: 300px;
+  height: 100%;
   background: rgba(14, 19, 34, 0.95);
   border-right: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
-  transform: translateX(-100%);
-  visibility: hidden;
-  transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  z-index: 200;
 }
 
 .session-sidebar.open {
-  transform: translateX(0);
-  visibility: visible;
   box-shadow: 4px 0 40px rgba(0, 0, 0, 0.3);
 }
 

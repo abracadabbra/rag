@@ -6,42 +6,48 @@
 
 ## Overview
 
-**注意**：本项目目前没有前端代码，以下是规划的质量标准。
+The frontend currently has a Vite build check but no dedicated lint, typecheck,
+or unit-test command.
 
-计划使用：
-- **ESLint** - 代码检查
-- **Prettier** - 代码格式化
-- **Vitest** - 单元测试
-- **React Testing Library** - 组件测试
+Required verification for frontend changes:
 
----
-
-## Forbidden Patterns
-
-- ❌ 使用 `any` 类型
-- ❌ 直接修改 state（使用 `setState`）
-- ❌ 在循环中使用 Hooks
+```bash
+cd frontend && npm run build
+```
 
 ---
 
 ## Required Patterns
 
-- ✅ 使用 TypeScript
-- ✅ 使用函数组件 + Hooks
-- ✅ Props 使用接口定义
+- Keep shared API behavior in `frontend/src/services/api.js`.
+- Keep repeated scene QA behavior in `QAView.vue`.
+- Use Vue refs/computed values for local state.
+- Use scoped CSS for component-specific styles.
+- Preserve existing scene theme variables and dark financial UI style.
+
+---
+
+## Forbidden Patterns
+
+- Do not duplicate `querySceneStream` parsing in components.
+- Do not add dependencies unless the task requires them and the user approves.
+- Do not hard-code a backend host in components; use the existing `/api/v1` service base.
+- Do not expose raw backend exception details in the UI.
 
 ---
 
 ## Testing Requirements
 
-- 关键组件需要单元测试
-- API 调用需要 Mock
+- Backend/API field changes that affect frontend rendering need matching backend tests.
+- Frontend-only visual or interaction changes must at least pass `npm run build`.
+- For SSE changes, verify `sources`, `chunk`, `clarification`, `done`, and `error` handling stays compatible.
 
 ---
 
 ## Code Review Checklist
 
-- [ ] 通过 ESLint 检查
-- [ ] 通过 TypeScript 类型检查
-- [ ] 组件有 Props 类型定义
-- [ ] 测试通过
+- [ ] `cd frontend && npm run build` passes.
+- [ ] No unused imports.
+- [ ] Text fits in compact controls on desktop and mobile widths.
+- [ ] Pending/loading/error states are handled.
+- [ ] Cross-layer response fields match backend schemas and docs.

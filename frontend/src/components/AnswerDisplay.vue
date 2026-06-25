@@ -15,6 +15,7 @@ const props = defineProps({
 
 const displayedText = ref('')
 const isTyping = ref(false)
+const isStreaming = ref(false)
 
 marked.setOptions({ breaks: true, gfm: true })
 
@@ -23,7 +24,7 @@ const renderedAnswer = computed(() => {
 })
 
 const startTypewriter = (text) => {
-  if (!props.streaming) {
+  if (!props.streaming || isStreaming.value) {
     displayedText.value = text
     return
   }
@@ -43,8 +44,20 @@ const startTypewriter = (text) => {
   type()
 }
 
-watch(() => props.answer, (newAnswer) => {
-  startTypewriter(newAnswer)
+watch(() => props.answer, (newAnswer, oldAnswer) => {
+  // Real streaming: text is being appended character by character
+  if (newAnswer && oldAnswer && newAnswer.startsWith(oldAnswer) && newAnswer.length > oldAnswer.length) {
+    isStreaming.value = true
+    displayedText.value = newAnswer
+    return
+  }
+  // New answer arrived (not streaming) — use typewriter
+  if (!isStreaming.value) {
+    startTypewriter(newAnswer)
+  } else {
+    displayedText.value = newAnswer
+    isStreaming.value = false
+  }
 }, { immediate: true })
 
 defineExpose({ isTyping })
@@ -75,10 +88,12 @@ defineExpose({ isTyping })
 .answer-content :deep(h1),
 .answer-content :deep(h2),
 .answer-content :deep(h3) {
+  font-family: var(--font-display);
   font-size: 16px;
   font-weight: 600;
   margin: 16px 0 8px 0;
   color: var(--text-primary);
+  letter-spacing: -0.01em;
 }
 
 .answer-content :deep(h1:first-child),
@@ -91,24 +106,40 @@ defineExpose({ isTyping })
   background: var(--bg-elevated);
   padding: 2px 6px;
   border-radius: 4px;
-  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-family: var(--font-mono);
   font-size: 13px;
   color: #f0d080;
 }
 
 .answer-content :deep(pre) {
   background: var(--bg-elevated);
-  padding: 14px 18px;
+  padding: 16px 20px;
   border-radius: 10px;
   overflow-x: auto;
   margin: 12px 0;
   border: 1px solid var(--border-subtle);
+  position: relative;
+}
+
+.answer-content :deep(pre)::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--accent);
+  opacity: 0.4;
 }
 
 .answer-content :deep(pre code) {
   background: none;
   padding: 0;
   color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.6;
 }
 
 .answer-content :deep(ul),

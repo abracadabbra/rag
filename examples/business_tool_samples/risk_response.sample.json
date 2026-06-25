@@ -1,0 +1,25 @@
+{
+  "order_id": "ORD12345",
+  "decision": "block",
+  "risk_score": 87,
+  "risk_level": "high",
+  "hit_rules": [
+    {
+      "rule_id": "RISK-velocity-001",
+      "rule_name": "短时间多次高额交易",
+      "evidence": "10 分钟内同卡 4 次交易，累计金额 1820 元"
+    }
+  ],
+  "transaction_context": {
+    "amount": 680.0,
+    "city": "上海",
+    "channel": "app",
+    "payment_method": "credit_card"
+  },
+  "customer_context": {
+    "user_level": "standard",
+    "recent_chargebacks": 1,
+    "account_age_days": 42
+  },
+  "recommended_action": "建议保持拦截，并引导用户完成二次验证后重试。"
+}

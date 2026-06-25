@@ -4,12 +4,18 @@ RAG 系统配置管理
 
 import os
 from typing import Optional
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
 
 
 class Settings(BaseSettings):
     """应用配置"""
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+    )
 
     # ==================== 应用配置 ====================
     app_name: str = "RAG System"
@@ -41,9 +47,9 @@ class Settings(BaseSettings):
     redis_session_ttl: int = 1800  # 30分钟
 
     # ==================== LLM 配置 ====================
-    # MiniMax (通过 aicodee 代理)
+    # MiniMax (通过 topapi 代理)
     minimax_api_key: str = ""
-    minimax_api_base: str = "https://v2.aicodee.com/v1"
+    minimax_api_base: str = "https://topapi.link/v1"
     minimax_model: str = "MiniMax-M2.7-highspeed"
 
     # OpenAI (备选)
@@ -69,6 +75,10 @@ class Settings(BaseSettings):
     # OpenAI Embedding
     use_openai_embedding: bool = False
     openai_embedding_model: str = "text-embedding-3-small"
+
+    # Deterministic local embedding for offline development / CI smoke checks
+    use_deterministic_embedding: bool = False
+    deterministic_embedding_dimension: int = 384
 
     # Sentence Transformer Embedding
     use_sentence_transformer: bool = False
@@ -114,6 +124,24 @@ class Settings(BaseSettings):
     supported_formats: list[str] = ["md", "pdf", "docx", "txt"]
 
     # ==================== 业务系统 API ====================
+    enable_business_tools: bool = True
+    business_tool_timeout: int = 5
+    business_tool_corpus_check_timeout: float = 1.0
+    enable_business_tool_llm_intent: bool = False
+    business_tool_llm_intent_min_confidence: float = 0.75
+    enable_business_tool_audit_file: bool = False
+    business_tool_audit_file: str = "logs/business_tool_audit.jsonl"
+    enable_business_tool_access_control: bool = False
+    business_tool_access_token: str = ""
+    business_tool_read_token: str = ""
+    business_tool_execute_token: str = ""
+
+    risk_api_base_url: str = ""
+    risk_api_key: str = ""
+
+    profit_api_base_url: str = ""
+    profit_api_key: str = ""
+
     simulation_api_base_url: str = ""
     simulation_api_key: str = ""
     simulation_api_timeout: int = 30
@@ -128,12 +156,6 @@ class Settings(BaseSettings):
     enable_auth: bool = False
     api_key: str = ""
     jwt_secret: str = ""
-
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = False
-
 
 @lru_cache()
 def get_settings() -> Settings:

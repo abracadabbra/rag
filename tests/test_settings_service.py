@@ -3,11 +3,12 @@ Settings 服务单元测试
 """
 
 import pytest
-import tempfile
-from pathlib import Path
+import sys
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from api.services.settings_service import (
+    _is_secret_key,
     _mask_api_key,
     _read_env,
     _write_env,
@@ -23,6 +24,38 @@ def temp_env(tmp_path):
     env_file = tmp_path / ".env"
     with patch("api.services.settings_service.ENV_FILE", env_file):
         yield env_file
+
+
+@pytest.fixture(autouse=True)
+def restore_business_tool_runtime_settings():
+    """Avoid leaking runtime business-tool settings across tests."""
+    from api.config import settings
+
+    business_fields = [
+        "enable_business_tools",
+        "business_tool_timeout",
+        "enable_business_tool_llm_intent",
+        "business_tool_llm_intent_min_confidence",
+        "enable_business_tool_access_control",
+        "business_tool_access_token",
+        "business_tool_read_token",
+        "business_tool_execute_token",
+        "enable_business_tool_audit_file",
+        "business_tool_audit_file",
+        "risk_api_base_url",
+        "risk_api_key",
+        "profit_api_base_url",
+        "profit_api_key",
+    ]
+    original_values = {field: getattr(settings, field) for field in business_fields}
+    yield
+    for field, value in original_values.items():
+        setattr(settings, field, value)
+    from api.services.business_clients import reset_business_clients
+    from api.services.tool_service import reset_tool_service
+
+    reset_business_clients()
+    reset_tool_service()
 
 
 class TestMaskApiKey:
@@ -43,6 +76,20 @@ class TestMaskApiKey:
 
     def test_none_key(self):
         assert _mask_api_key(None) == "****"
+
+    @pytest.mark.parametrize(
+        "key",
+        [
+            "openai_api_key",
+            "business_tool_access_token",
+            "jwt_secret",
+        ],
+    )
+    def test_secret_key_detection(self, key):
+        assert _is_secret_key(key) is True
+
+    def test_non_secret_key_detection(self):
+        assert _is_secret_key("risk_api_base_url") is False
 
 
 class TestReadEnv:
@@ -123,14 +170,51 @@ class TestGetLlmSettings:
             assert result[key] == ""
 
     def test_api_key_masked(self, temp_env):
-        temp_env.write_text("minimax_api_key=sk-1234567890\n")
+        temp_env.write_text(
+            "minimax_api_key=sk-1234567890\n"
+            "risk_api_key=risk-secret-123456\n"
+            "profit_api_key=profit-secret-123456\n"
+        )
         result = get_llm_settings()
         assert result["minimax_api_key"] == "sk-1****7890"
+        assert result["risk_api_key"] == "risk****3456"
+        assert result["profit_api_key"] == "prof****3456"
 
     def test_non_key_fields_not_masked(self, temp_env):
         temp_env.write_text("minimax_model=MiniMax-M2.7\n")
         result = get_llm_settings()
         assert result["minimax_model"] == "MiniMax-M2.7"
+
+    def test_business_tool_intent_fields_are_exposed(self, temp_env):
+        temp_env.write_text(
+            "enable_business_tools=true\n"
+            "business_tool_timeout=7\n"
+            "enable_business_tool_llm_intent=true\n"
+            "business_tool_llm_intent_min_confidence=0.8\n"
+            "enable_business_tool_access_control=true\n"
+            "business_tool_access_token=business-token-123456\n"
+            "business_tool_read_token=read-token-123456\n"
+            "business_tool_execute_token=execute-token-123456\n"
+            "enable_business_tool_audit_file=true\n"
+            "business_tool_audit_file=logs/business_tool_audit.jsonl\n"
+            "risk_api_base_url=https://risk.example.test\n"
+            "profit_api_base_url=https://profit.example.test\n"
+        )
+
+        result = get_llm_settings()
+
+        assert result["enable_business_tools"] == "true"
+        assert result["business_tool_timeout"] == "7"
+        assert result["enable_business_tool_llm_intent"] == "true"
+        assert result["business_tool_llm_intent_min_confidence"] == "0.8"
+        assert result["enable_business_tool_access_control"] == "true"
+        assert result["business_tool_access_token"] == "busi****3456"
+        assert result["business_tool_read_token"] == "read****3456"
+        assert result["business_tool_execute_token"] == "exec****3456"
+        assert result["enable_business_tool_audit_file"] == "true"
+        assert result["business_tool_audit_file"] == "logs/business_tool_audit.jsonl"
+        assert result["risk_api_base_url"] == "https://risk.example.test"
+        assert result["profit_api_base_url"] == "https://profit.example.test"
 
 
 class TestUpdateLlmSettings:
@@ -160,3 +244,107 @@ class TestUpdateLlmSettings:
             "minimax_model": "test-model",
         })
         assert len(result["updated"]) == 2
+
+    def test_update_business_tool_intent_fields(self, temp_env):
+        result = update_llm_settings({
+            "enable_business_tools": True,
+            "business_tool_timeout": 8,
+            "risk_api_base_url": "https://risk.example.test",
+            "risk_api_key": "risk-secret",
+            "profit_api_base_url": "https://profit.example.test",
+            "profit_api_key": "profit-secret",
+            "enable_business_tool_llm_intent": True,
+            "business_tool_llm_intent_min_confidence": "0.82",
+            "enable_business_tool_access_control": True,
+            "business_tool_access_token": "business-access-secret",
+            "business_tool_read_token": "business-read-secret",
+            "business_tool_execute_token": "business-execute-secret",
+            "enable_business_tool_audit_file": True,
+            "business_tool_audit_file": "logs/business_tool_audit.jsonl",
+        })
+
+        assert result["success"] is True
+        assert result["updated"] == [
+            "enable_business_tools",
+            "business_tool_timeout",
+            "risk_api_base_url",
+            "risk_api_key",
+            "profit_api_base_url",
+            "profit_api_key",
+            "enable_business_tool_llm_intent",
+            "business_tool_llm_intent_min_confidence",
+            "enable_business_tool_access_control",
+            "business_tool_access_token",
+            "business_tool_read_token",
+            "business_tool_execute_token",
+            "enable_business_tool_audit_file",
+            "business_tool_audit_file",
+        ]
+
+        settings = get_llm_settings()
+        assert settings["enable_business_tools"] == "true"
+        assert settings["business_tool_timeout"] == "8"
+        assert settings["risk_api_base_url"] == "https://risk.example.test"
+        assert settings["risk_api_key"] == "risk****cret"
+        assert settings["profit_api_base_url"] == "https://profit.example.test"
+        assert settings["profit_api_key"] == "prof****cret"
+        assert settings["enable_business_tool_llm_intent"] == "true"
+        assert settings["business_tool_llm_intent_min_confidence"] == "0.82"
+        assert settings["enable_business_tool_access_control"] == "true"
+        assert settings["business_tool_access_token"] == "busi****cret"
+        assert settings["business_tool_read_token"] == "busi****cret"
+        assert settings["business_tool_execute_token"] == "busi****cret"
+
+    def test_update_business_tool_settings_apply_runtime_and_reset_services(
+        self,
+        temp_env,
+        monkeypatch,
+    ):
+        from api.config import settings
+
+        reset_calls = []
+        monkeypatch.setattr(settings, "enable_business_tools", False)
+        monkeypatch.setattr(settings, "business_tool_timeout", 5)
+        monkeypatch.setattr(settings, "risk_api_base_url", "")
+        monkeypatch.setattr(settings, "profit_api_base_url", "")
+        monkeypatch.setattr(settings, "enable_business_tool_access_control", False)
+        monkeypatch.setattr(settings, "business_tool_access_token", "")
+        monkeypatch.setattr(settings, "business_tool_read_token", "")
+        monkeypatch.setattr(settings, "business_tool_execute_token", "")
+        monkeypatch.setattr(
+            "api.services.business_clients.reset_business_clients",
+            lambda: reset_calls.append("business_clients"),
+        )
+        monkeypatch.setattr(
+            "api.services.tool_service.reset_tool_service",
+            lambda: reset_calls.append("tool_service"),
+        )
+        monkeypatch.setitem(
+            sys.modules,
+            "api.services.conversation_agent",
+            SimpleNamespace(
+                reset_conversation_agent=lambda: reset_calls.append("conversation_agent")
+            ),
+        )
+
+        result = update_llm_settings({
+            "enable_business_tools": True,
+            "business_tool_timeout": 9,
+            "risk_api_base_url": "https://risk.example.test",
+            "profit_api_base_url": "https://profit.example.test",
+            "enable_business_tool_access_control": True,
+            "business_tool_access_token": "business-access-secret",
+            "business_tool_read_token": "business-read-secret",
+            "business_tool_execute_token": "business-execute-secret",
+        })
+
+        assert result["success"] is True
+        assert settings.enable_business_tools is True
+        assert settings.business_tool_timeout == 9
+        assert settings.risk_api_base_url == "https://risk.example.test"
+        assert settings.profit_api_base_url == "https://profit.example.test"
+        assert settings.enable_business_tool_access_control is True
+        assert settings.business_tool_access_token == "business-access-secret"
+        assert settings.business_tool_read_token == "business-read-secret"
+        assert settings.business_tool_execute_token == "business-execute-secret"
+        assert reset_calls == ["business_clients", "tool_service", "conversation_agent"]

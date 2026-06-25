@@ -43,7 +43,8 @@ class CacheService:
         query: str,
         scene_type: str,
         top_k: int,
-        score_threshold: float
+        score_threshold: float,
+        answer_perspective: str = None,
     ) -> str:
         """
         生成查询缓存 key
@@ -57,7 +58,8 @@ class CacheService:
         Returns:
             缓存 key
         """
-        cache_str = f"{scene_type}:{query}:{top_k}:{score_threshold}"
+        perspective_key = answer_perspective or "auto"
+        cache_str = f"{scene_type}:{query}:{top_k}:{score_threshold}:{perspective_key}"
         cache_hash = hashlib.md5(cache_str.encode('utf-8')).hexdigest()
         return f"{self.QUERY_KEY_PREFIX}:{scene_type}:{cache_hash}"
 
@@ -138,7 +140,8 @@ class CacheService:
         query: str,
         scene_type: str,
         top_k: int,
-        score_threshold: float
+        score_threshold: float,
+        answer_perspective: str = None,
     ) -> Optional[Dict[str, Any]]:
         """
         从缓存获取查询结果
@@ -156,7 +159,13 @@ class CacheService:
             return None
 
         try:
-            cache_key = self._generate_cache_key(query, scene_type, top_k, score_threshold)
+            cache_key = self._generate_cache_key(
+                query,
+                scene_type,
+                top_k,
+                score_threshold,
+                answer_perspective=answer_perspective,
+            )
             cached_data = self.redis.get(cache_key)
 
             if cached_data:
@@ -177,7 +186,8 @@ class CacheService:
         scene_type: str,
         top_k: int,
         score_threshold: float,
-        result: Dict[str, Any]
+        result: Dict[str, Any],
+        answer_perspective: str = None,
     ) -> bool:
         """
         将查询结果写入缓存
@@ -196,7 +206,13 @@ class CacheService:
             return False
 
         try:
-            cache_key = self._generate_cache_key(query, scene_type, top_k, score_threshold)
+            cache_key = self._generate_cache_key(
+                query,
+                scene_type,
+                top_k,
+                score_threshold,
+                answer_perspective=answer_perspective,
+            )
 
             # 序列化结果
             cached_data = json.dumps(result, ensure_ascii=False)

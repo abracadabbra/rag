@@ -1,0 +1,75 @@
+{
+  "order_id": "ORD88888",
+  "settlement_status": "settled",
+  "gross_amount": 128.6,
+  "platform_commission": 19.29,
+  "commission_rate": "15.0%",
+  "driver_income": 92.35,
+  "driver_income_detail": {
+    "base_fare": 78.0,
+    "distance_fee": 16.35,
+    "service_fee_deduction": -2.0
+  },
+  "subsidy": 8.0,
+  "coupon": 6.0,
+  "channel_fee": 2.96,
+  "platform_net_profit": 2.33,
+  "chain": [
+    {
+      "node": "乘客支付",
+      "amount": 128.6,
+      "source_field": "gross_amount",
+      "role": "订单收入",
+      "tone": "income",
+      "note": "乘客实付基数"
+    },
+    {
+      "node": "平台抽成",
+      "amount": 19.29,
+      "source_field": "platform_commission",
+      "role": "平台收入",
+      "tone": "income",
+      "note": "收入进入毛利公式"
+    },
+    {
+      "node": "司机收入",
+      "amount": 92.35,
+      "source_field": "driver_income",
+      "role": "司机结算",
+      "tone": "payout",
+      "note": "履约侧结算"
+    },
+    {
+      "node": "平台补贴",
+      "amount": -8.0,
+      "source_field": "subsidy",
+      "role": "平台成本",
+      "tone": "cost",
+      "note": "平台承担成本"
+    },
+    {
+      "node": "用户优惠",
+      "amount": -6.0,
+      "source_field": "coupon",
+      "role": "营销成本",
+      "tone": "cost",
+      "note": "优惠消耗抽成"
+    },
+    {
+      "node": "渠道成本",
+      "amount": -2.96,
+      "source_field": "channel_fee",
+      "role": "渠道成本",
+      "tone": "cost",
+      "note": "获客/支付渠道成本"
+    },
+    {
+      "node": "平台净毛利",
+      "amount": 2.33,
+      "source_field": "platform_net_profit",
+      "role": "经营结果",
+      "tone": "net",
+      "note": "最终留存"
+    }
+  ]
+}

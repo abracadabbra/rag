@@ -10,11 +10,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from api.config import settings
 from api.logging_config import setup_logging
 from api.routers.cache import router as cache_router
+from api.routers.business_tools import router as business_tools_router
 from api.routers.health import router as health_router
-from api.routers.risk_rules import router as risk_rules_router
-from api.routers.model_cards import router as model_cards_router
-from api.routers.simulation import router as simulation_router
-from api.routers.profit import router as profit_router
+from api.routers.scene import router as scene_router
 from api.routers.config import router as config_router
 from api.routers.sessions import router as sessions_router
 from api.routers.settings import router as settings_router
@@ -60,11 +58,9 @@ app.add_middleware(
 
 # 注册路由
 app.include_router(health_router, prefix="/api/v1", tags=["健康检查"])
-app.include_router(risk_rules_router, prefix="/api/v1/risk-rules", tags=["风控规则"])
-app.include_router(model_cards_router, prefix="/api/v1/model-cards", tags=["模型卡片"])
-app.include_router(simulation_router, prefix="/api/v1/simulation", tags=["仿真解读"])
-app.include_router(profit_router, prefix="/api/v1/profit", tags=["毛利抽成"])
+app.include_router(scene_router, prefix="/api/v1", tags=["场景问答"])
 app.include_router(cache_router, prefix="/api/v1/cache", tags=["缓存管理"])
+app.include_router(business_tools_router, prefix="/api/v1/business-tools", tags=["业务工具"])
 app.include_router(config_router, prefix="/api/v1/config", tags=["配置管理"])
 app.include_router(sessions_router, prefix="/api/v1/sessions", tags=["会话管理"])
 app.include_router(settings_router, prefix="/api/v1/settings", tags=["LLM设置"])

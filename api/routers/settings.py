@@ -27,6 +27,20 @@ class LlmSettingsUpdate(BaseModel):
     openai_max_tokens: Optional[int] = Field(None, ge=1, le=32000)
     local_llm_base_url: Optional[str] = None
     local_llm_model: Optional[str] = None
+    enable_business_tools: Optional[bool] = None
+    business_tool_timeout: Optional[int] = Field(None, ge=1, le=60)
+    enable_business_tool_llm_intent: Optional[bool] = None
+    business_tool_llm_intent_min_confidence: Optional[float] = Field(None, ge=0, le=1)
+    enable_business_tool_access_control: Optional[bool] = None
+    business_tool_access_token: Optional[str] = None
+    business_tool_read_token: Optional[str] = None
+    business_tool_execute_token: Optional[str] = None
+    enable_business_tool_audit_file: Optional[bool] = None
+    business_tool_audit_file: Optional[str] = None
+    risk_api_base_url: Optional[str] = None
+    risk_api_key: Optional[str] = None
+    profit_api_base_url: Optional[str] = None
+    profit_api_key: Optional[str] = None
 
 
 @router.get("/", summary="获取 LLM 配置")

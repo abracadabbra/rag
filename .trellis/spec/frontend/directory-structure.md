@@ -6,168 +6,83 @@
 
 ## Overview
 
-**注意**：本项目目前没有前端代码，以下是规划的前端架构。
+The frontend is a Vue 3 single-page application built with Vite.
 
-计划使用：
-- **框架**：React 18+ with TypeScript
-- **构建工具**：Vite
-- **状态管理**：React Context + Hooks
-- **UI 库**：待定（Ant Design / Material-UI）
-- **HTTP 客户端**：Axios
+- Framework: Vue 3 with `<script setup>`
+- Router: Vue Router 4
+- API client: native `fetch` in `frontend/src/services/api.js`
+- Styling: Vue single-file components with scoped CSS plus global CSS variables in `App.vue`
+- Build check: `cd frontend && npm run build`
 
 ---
 
 ## Directory Layout
 
-```
+```text
 frontend/
 ├── src/
-│   ├── main.tsx              # 应用入口
-│   ├── App.tsx               # 根组件
-│   ├── components/           # 可复用组件
-│   │   ├── common/           # 通用组件（Button, Input）
-│   │   ├── chat/             # 聊天相关组件
-│   │   │   ├── ChatWindow.tsx
-│   │   │   ├── MessageList.tsx
-│   │   │   └── InputBox.tsx
-│   │   └── layout/           # 布局组件
-│   │       ├── Header.tsx
-│   │       └── Sidebar.tsx
-│   ├── pages/                # 页面组件
-│   │   ├── RiskRulePage.tsx  # 风控规则页面
-│   │   ├── ModelCardPage.tsx # 模型卡片页面
-│   │   └── HomePage.tsx      # 首页
-│   ├── hooks/                # 自定义 Hooks
-│   │   ├── useChat.ts        # 聊天逻辑
-│   │   ├── useSession.ts     # 会话管理
-│   │   └── useQuery.ts       # 查询逻辑
-│   ├── services/             # API 服务
-│   │   ├── api.ts            # API 客户端配置
-│   │   ├── riskRuleService.ts
-│   │   └── sessionService.ts
-│   ├── types/                # TypeScript 类型定义
-│   │   ├── api.ts            # API 类型
-│   │   └── models.ts         # 数据模型
-│   ├── utils/                # 工具函数
-│   │   ├── format.ts         # 格式化函数
-│   │   └── validation.ts     # 验证函数
-│   ├── contexts/             # React Context
-│   │   └── SessionContext.tsx
-│   └── styles/               # 样式文件
-│       └── global.css
-├── public/                   # 静态资源
-├── index.html                # HTML 模板
-├── vite.config.ts            # Vite 配置
-├── tsconfig.json             # TypeScript 配置
-└── package.json              # 依赖管理
+│   ├── main.js               # App bootstrap and router setup
+│   ├── App.vue               # Root shell, global theme variables
+│   ├── components/           # Reusable Vue components
+│   ├── services/
+│   │   └── api.js            # REST/SSE API client
+│   └── views/                # Route-level views
+├── index.html
+├── package.json
+└── vite.config.js
 ```
 
 ---
 
 ## Module Organization
 
-### 1. Components（组件）
+### Components
 
-**职责**：可复用的 UI 组件
+Reusable UI belongs in `frontend/src/components/`.
 
-- **common/** - 通用组件（按钮、输入框、卡片）
-- **chat/** - 聊天相关组件
-- **layout/** - 布局组件（头部、侧边栏）
+- Use one `.vue` single-file component per component.
+- Use PascalCase file names such as `QAView.vue`.
+- Prefer local component state with Vue refs/computed values.
+- Keep repeated scene behavior in shared components such as `QAView.vue`.
 
-**规范**：
-- 每个组件一个文件夹（如果有样式和测试）
-- 组件名使用 PascalCase
-- Props 使用 TypeScript 接口定义
+### Views
 
-### 2. Pages（页面）
+Route-level pages belong in `frontend/src/views/`.
 
-**职责**：路由对应的页面组件
+- Scene views should stay thin and pass scene-specific props into `QAView`.
+- Avoid duplicating full chat logic across scene views.
 
-- 每个页面对应一个路由
-- 页面组件组合多个 components
-- 页面组件处理数据获取和状态管理
+### Services
 
-### 3. Hooks（自定义 Hooks）
+API calls belong in `frontend/src/services/api.js`.
 
-**职责**：封装可复用的逻辑
-
-- 命名以 `use` 开头
-- 封装 API 调用、状态管理、副作用
-
-### 4. Services（API 服务）
-
-**职责**：封装 API 调用
-
-- 每个业务场景一个 service 文件
-- 使用 Axios 发起请求
-- 统一的错误处理
+- Keep route mapping and SSE parsing centralized.
+- Do not duplicate `fetch` logic in components.
+- When backend response fields change, update the service parser and affected components together.
 
 ---
 
 ## Naming Conventions
 
-### 文件命名
-
-- **组件文件**：`PascalCase.tsx`（例如：`ChatWindow.tsx`）
-- **Hook 文件**：`camelCase.ts`（例如：`useChat.ts`）
-- **Service 文件**：`camelCase.ts`（例如：`riskRuleService.ts`）
-- **工具文件**：`camelCase.ts`（例如：`format.ts`）
-
-### 组件命名
-
-- **组件名**：PascalCase（例如：`ChatWindow`）
-- **Props 接口**：`<ComponentName>Props`（例如：`ChatWindowProps`）
+- Components: `PascalCase.vue`
+- Views: `PascalCase.vue`
+- Services/helpers: `camelCase.js`
+- Template event handlers: `handle<Event>` in `<script setup>`
 
 ---
 
-## Examples
+## Current API Flow
 
-### 组件示例（待实现）
+For scene chat:
 
-```tsx
-// src/components/chat/ChatWindow.tsx
-interface ChatWindowProps {
-  sessionId: string | null;
-  onSendMessage: (message: string) => void;
-}
-
-export const ChatWindow: React.FC<ChatWindowProps> = ({ 
-  sessionId, 
-  onSendMessage 
-}) => {
-  // 组件实现
-  return <div>...</div>;
-};
+```text
+QAView.vue -> querySceneStream(sceneType, params, callbacks) -> /api/v1/<scene>/query-stream
 ```
 
-### Hook 示例（待实现）
+SSE events currently handled by the frontend:
 
-```tsx
-// src/hooks/useChat.ts
-export const useChat = (sceneType: string) => {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [loading, setLoading] = useState(false);
-  
-  const sendMessage = async (query: string) => {
-    // 发送消息逻辑
-  };
-  
-  return { messages, loading, sendMessage };
-};
-```
-
-### Service 示例（待实现）
-
-```tsx
-// src/services/riskRuleService.ts
-import axios from 'axios';
-
-export const queryRiskRules = async (query: string) => {
-  const response = await axios.post('/api/v1/risk-rules/query', {
-    query,
-    top_k: 5,
-    score_threshold: 0.7
-  });
-  return response.data;
-};
-```
+- `sources`: sources, retrieval metadata, `tool_calls`, `tool_intent`
+- `chunk`: streamed answer text
+- `clarification`: missing information prompt, options, optional `tool_intent`
+- `done`: final session id
+- `error`: user-facing error message

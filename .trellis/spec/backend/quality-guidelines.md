@@ -244,6 +244,256 @@ class Settings(BaseSettings):
         env_file = ".env"
 ```
 
+## Scenario: Runtime Settings Env Writes
+
+### 1. Scope / Trigger
+
+- Trigger: Backend settings APIs write runtime configuration into `.env`.
+- Applies to: `api/services/settings_service.py`, `api/routers/settings.py`, and settings tests.
+
+### 2. Signatures
+
+- Service read: `get_llm_settings() -> dict`
+- Service write: `update_llm_settings(updates: dict) -> dict`
+- API write: `PATCH /api/v1/settings/`
+
+### 3. Contracts
+
+- Only keys in `LLM_CONFIG_KEYS` may be written.
+- API keys returned by `get_llm_settings()` must be masked.
+- Values written to `.env` must be strings.
+- Boolean values must be persisted as lowercase `true` / `false`, not Python `True` / `False`.
+- Empty API key fields from the frontend should not overwrite existing secrets.
+
+### 4. Validation & Error Matrix
+
+- Unknown key -> ignored by `update_llm_settings()`.
+- `None` value -> skipped.
+- Invalid `llm_provider` -> router returns 422.
+- Invalid numeric bounds such as confidence outside `0..1` -> router returns 422.
+
+### 5. Good/Base/Bad Cases
+
+- Good: `{"enable_business_tool_llm_intent": True}` writes `enable_business_tool_llm_intent=true`.
+- Base: `{"business_tool_llm_intent_min_confidence": 0.82}` writes `0.82`.
+- Bad: writing raw booleans and producing `enable_business_tool_llm_intent=True`.
+
+### 6. Tests Required
+
+- Settings service test should assert business tool intent fields are exposed.
+- Settings service test should assert boolean updates round-trip as lowercase strings.
+- Settings API test should assert confidence validation accepts `0..1` and rejects values outside that range.
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```python
+env_vars[key] = value
+```
+
+#### Correct
+
+```python
+env_vars[key] = _format_env_value(value)
+```
+
+## Scenario: Business Tool Result Exposure
+
+### 1. Scope / Trigger
+
+- Trigger: Business tools call real systems and pass data to prompts and frontend UI.
+- Applies to: `api/services/tool_service.py`, `api/services/business_clients.py`, scene APIs, and `QAView.vue`.
+
+### 2. Signatures
+
+- Tool execution: `BusinessToolService.maybe_execute(query: str, scene_type: str) -> list[dict]`
+- Prompt injection: `BusinessToolService.format_tool_context(tool_calls: list[dict]) -> str`
+- Frontend payload: `QueryResponse.tool_calls` and SSE `sources.tool_calls`
+
+### 3. Contracts
+
+- Business clients may validate and return full response payloads from real systems.
+- `BusinessToolService` must filter tool results through a per-tool allowlist before returning `tool_calls.result`.
+- Prompt context must be formatted from the filtered `tool_calls.result`, not the raw client payload.
+- Audit logs may include top-level result keys, but must not log full payload values.
+- Profit `result.chain` should end with `平台净毛利` when chain data is available.
+- Tool calls should include safe interface metadata: `data_source` (`mock` or `http`) and `endpoint_path`.
+- Audit logs should record endpoint templates such as `/profit/orders/{order_id}/chain`, not raw order ids embedded in paths.
+- When `BusinessToolService.maybe_execute()` adds a new top-level `tool_calls[*]`
+  field for frontend or prompt explainability, `api/models/schemas.py::ToolCall`
+  must expose the same field. Otherwise non-streaming `QueryResponse` will
+  silently drop it during Pydantic serialization even if SSE still includes it.
+
+### 4. Validation & Error Matrix
+
+- Missing required contract field -> business client raises `ValueError`; tool call returns `status="error"` with generic summary.
+- Unknown extra field in real response -> accepted by client validation but excluded from `tool_calls.result`.
+- Nested unknown field under `hit_rules`, `chain`, or detail objects -> excluded from frontend and prompt context.
+
+### 5. Good/Base/Bad Cases
+
+- Good: profit response includes `payment_account`; audit logs key names only, and `tool_calls.result` omits it.
+- Good: `tool_calls` includes `endpoint_path` for frontend explainability, while audit logs use the masked argument plus endpoint template.
+- Base: profit response includes allowlisted `chain.node` and `chain.amount`; frontend renders the money-flow strip.
+- Bad: passing raw client payload directly into `tool_calls.result` or `format_tool_context()`.
+
+### 6. Tests Required
+
+- Tool service test should include extra sensitive fields and assert they are absent from `tool_calls.result`.
+- The same test should assert sensitive values are absent from `format_tool_context()`.
+- Business client tests should continue validating required fields and nested chain/rule contracts.
+- API regression tests should assert non-streaming `QueryResponse.tool_calls`
+  preserves frontend-facing explainability fields such as `audit_id`,
+  `endpoint_path`, `data_source`, `error_type`, `selection_reason`, and
+  `confidence`.
+- Frontend contract tests should assert `QAView.vue` renders every
+  frontend-facing field that backend `tool_calls` promises.
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```python
+result = tool.executor(order_id)
+```
+
+```python
+# Added in BusinessToolService, but missing from api.models.schemas.ToolCall.
+return {"endpoint_path": endpoint_path, "data_source": data_source}
+```
+
+#### Correct
+
+```python
+raw_result = tool.executor(order_id)
+result = self._filter_result_for_display(tool.name, raw_result)
+```
+
+```python
+class ToolCall(BaseModel):
+    endpoint_path: Optional[str] = Field(None, description="业务工具接口路径")
+    data_source: Optional[str] = Field(None, description="业务工具数据源: mock/http")
+```
+
+## Scenario: Business Tool Path Parameter Safety
+
+### 1. Scope / Trigger
+
+- Trigger: Business tools render external HTTP paths from user or LLM-derived
+  order identifiers.
+- Applies to: `api/services/business_contracts.py`,
+  `api/services/tool_service.py`, `api/services/business_clients.py`, and
+  `api/routers/business_tools.py`.
+
+### 2. Signatures
+
+- Contract helper: `normalize_order_id(order_id: Any) -> str`
+- Endpoint renderer: `endpoint_path(tool_name: str, *, order_id: str) -> str`
+- Probe API: `POST /api/v1/business-tools/probe`
+
+### 3. Contracts
+
+- `order_id` used as an HTTP path parameter must match
+  `^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$`.
+- Empty values, whitespace, `/`, `.`, `?`, `#`, `&`, `%`, and other URL/path
+  control characters must be rejected before any business-system call.
+- Endpoint templates may still be rendered with the literal `{order_id}` for
+  runtime status, audit templates, and contract docs.
+- LLM-supplied `order_id` must be normalized before use. If invalid, ignore it
+  and only fall back to a safe order id extracted from the original user query;
+  otherwise ask for clarification.
+
+### 4. Validation & Error Matrix
+
+- Empty `order_id` -> `ValueError("order_id is required")`.
+- Unsafe `order_id` -> `ValueError("order_id contains unsupported characters")`.
+- Probe route catches these `ValueError`s and returns HTTP 400.
+- Invalid LLM `order_id` without a safe query fallback -> no tool execution,
+  `missing_fields=["order_id"]`.
+
+### 5. Good/Base/Bad Cases
+
+- Good: `ORD88888` renders `/profit/orders/ORD88888/chain`.
+- Base: `{order_id}` renders `/profit/orders/{order_id}/chain` for templates.
+- Bad: `../admin?token=secret` must not render an endpoint path or call HTTP.
+
+### 6. Tests Required
+
+- Contract/client tests should assert endpoint templates still render correctly.
+- Tool service tests should assert invalid LLM `order_id` does not execute.
+- Tool service tests should assert invalid LLM `order_id` can fall back to a
+  safe order id found in the user query.
+- Probe/API tests should assert unsafe `order_id` returns HTTP 400 and does not
+  leak the unsafe value or token-like substrings.
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```python
+return template.format(order_id=order_id)
+```
+
+#### Correct
+
+```python
+safe_order_id = normalize_order_id(order_id)
+return template.format(order_id=safe_order_id)
+```
+
+## Scenario: Session Message Metadata
+
+### 1. Scope / Trigger
+
+- Trigger: Assistant messages need to restore tool calls, tool intent, and retrieval metadata from session history.
+- Applies to: `api/services/session_manager.py`, `api/routers/sessions.py`, `ConversationAgent`, and `QAView.vue`.
+
+### 2. Signatures
+
+- Persist message: `SessionManager.add_message(session_id, role, content, metadata=None) -> bool`
+- Fetch session: `GET /api/v1/sessions/{session_id}`
+
+### 3. Contracts
+
+- Each `Message` must carry its own `metadata: dict`.
+- Assistant message metadata is the source of truth for historical UI restoration.
+- Session-level metadata may keep latest conversational context, such as missing-field `tool_intent` used to rebuild a clarified query.
+- `GET /api/v1/sessions/{session_id}` must return `metadata` on every message object.
+
+### 4. Validation & Error Matrix
+
+- Old messages without metadata -> model defaults to `{}`.
+- Multiple assistant messages with different `tool_calls` -> each message returns its own metadata.
+- Latest session-level metadata -> must not overwrite older message metadata in history responses.
+
+### 5. Good/Base/Bad Cases
+
+- Good: first assistant message has risk `tool_calls`, second has profit `tool_calls`; history returns both separately.
+- Base: user message has empty metadata.
+- Bad: frontend reconstructs every assistant message from `state.metadata.tool_calls`.
+
+### 6. Tests Required
+
+- Session manager test should assert message-level metadata survives multiple assistant messages.
+- Sessions API test should assert message objects include their own metadata.
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```python
+state.metadata.update(metadata)
+```
+
+#### Correct
+
+```python
+message = Message(..., metadata=metadata or {})
+state.messages.append(message)
+state.metadata.update(metadata)
+```
+
 ### ✅ 使用单例模式管理服务
 
 ```python

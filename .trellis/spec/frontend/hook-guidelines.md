@@ -1,54 +1,58 @@
 # Hook Guidelines
 
-> How hooks are used in this project.
+> How reusable composition logic is used in this project.
 
 ---
 
 ## Overview
 
-**注意**：本项目目前没有前端代码，以下是规划的 Hook 规范。
+This is a Vue project. React hooks are not used.
+
+The current codebase does not have a `src/composables/` directory. Add one only
+when multiple components need to share the same stateful Vue composition logic.
 
 ---
 
-## Custom Hook Patterns
+## Vue Composable Pattern
 
-自定义 Hook 命名以 `use` 开头：
+If a composable becomes necessary:
 
-```tsx
-// src/hooks/useChat.ts
-export const useChat = (sceneType: string) => {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [loading, setLoading] = useState(false);
-  
-  const sendMessage = async (query: string) => {
-    setLoading(true);
+```js
+// frontend/src/composables/useExample.js
+import { ref } from 'vue'
+
+export function useExample() {
+  const loading = ref(false)
+
+  const run = async () => {
+    loading.value = true
     try {
-      const response = await queryRiskRules(query);
-      setMessages([...messages, { query, answer: response.answer }]);
+      // shared async logic
     } finally {
-      setLoading(false);
+      loading.value = false
     }
-  };
-  
-  return { messages, loading, sendMessage };
-};
+  }
+
+  return { loading, run }
+}
 ```
 
 ---
 
-## Data Fetching
+## When To Extract
 
-计划使用 **React Query** 或 **SWR** 处理数据获取。
+Extract a composable when:
 
----
+- The same stateful logic appears in two or more components.
+- The logic is independent of one component's template.
+- The extraction reduces duplicated API/error/loading handling.
 
-## Naming Conventions
-
-- 自定义 Hook：`use<Name>`（例如：`useChat`, `useSession`）
-- 返回值：使用对象而不是数组（便于命名）
+Keep logic local when it is used by only one component.
 
 ---
 
 ## Common Mistakes
 
-（待前端开发后补充）
+- Do not create React-style hooks.
+- Do not extract a composable just to move code out of a component.
+- Do not duplicate API clients inside composables; call `frontend/src/services/api.js`.

@@ -147,6 +147,8 @@ def test_get_embedding_generator_respects_openai_toggle(monkeypatch):
     module, tracker = load_embeddings_module(monkeypatch)
     module.get_embedding_generator.cache_clear()
 
+    monkeypatch.setattr(module.settings, "use_deterministic_embedding", False)
+    monkeypatch.setattr(module.settings, "use_sentence_transformer", False)
     monkeypatch.setattr(module.settings, "use_openai_embedding", True)
     monkeypatch.setattr(module.settings, "openai_embedding_model", "text-embedding-3-small")
     monkeypatch.setattr(module.settings, "openai_api_key", "openai-key")
@@ -157,6 +159,8 @@ def test_get_embedding_generator_respects_openai_toggle(monkeypatch):
     assert tracker.openai_init_calls == [{"api_key": "openai-key"}]
 
     module.get_embedding_generator.cache_clear()
+    monkeypatch.setattr(module.settings, "use_deterministic_embedding", False)
+    monkeypatch.setattr(module.settings, "use_sentence_transformer", False)
     monkeypatch.setattr(module.settings, "use_openai_embedding", False)
     monkeypatch.setattr(module.settings, "embedding_model", "BAAI/bge-m3")
     monkeypatch.setattr(module.settings, "embedding_device", "cpu")
@@ -169,6 +173,40 @@ def test_get_embedding_generator_respects_openai_toggle(monkeypatch):
         "model_name": "BAAI/bge-m3",
         "use_fp16": False,
     }
+
+
+def test_deterministic_embedding_is_stable_and_dimensioned(monkeypatch):
+    module, _tracker = load_embeddings_module(monkeypatch)
+
+    embedding = module.DeterministicEmbedding(dimension=6)
+
+    first = embedding.embed_query("订单 ORD88888")
+    second = embedding.embed_query("订单 ORD88888")
+    other = embedding.embed_query("订单 ORD99999")
+    docs = embedding.embed_documents(["订单 ORD88888", "订单 ORD99999"])
+
+    assert first == second
+    assert first != other
+    assert len(first) == 6
+    assert docs == [first, other]
+    assert round(sum(value * value for value in first), 6) == 1.0
+
+
+def test_get_embedding_generator_prefers_deterministic_toggle(monkeypatch):
+    module, tracker = load_embeddings_module(monkeypatch)
+    module.get_embedding_generator.cache_clear()
+
+    monkeypatch.setattr(module.settings, "use_deterministic_embedding", True)
+    monkeypatch.setattr(module.settings, "deterministic_embedding_dimension", 7)
+    monkeypatch.setattr(module.settings, "use_openai_embedding", True)
+    monkeypatch.setattr(module.settings, "use_sentence_transformer", True)
+
+    generator = module.get_embedding_generator()
+
+    assert generator.__class__.__name__ == "DeterministicEmbedding"
+    assert generator.dimension == 7
+    assert tracker.openai_init_calls == []
+    assert tracker.bge_init_calls == []
 
 
 def test_module_level_helpers_delegate_to_cached_generator(monkeypatch):

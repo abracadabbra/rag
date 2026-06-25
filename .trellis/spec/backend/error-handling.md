@@ -17,7 +17,7 @@
 
 ### Python 异常类型
 
-使用 Python 内置异常，不定义自定义异常类：
+默认使用 Python 内置异常，不定义自定义异常类：
 
 | 异常类型 | 使用场景 | HTTP 状态码 |
 |---------|---------|-----------|
@@ -25,6 +25,16 @@
 | `TimeoutError` | 请求超时 | 504 Gateway Timeout |
 | `ValueError` | 参数验证失败 | 400 Bad Request |
 | `Exception` | 未预期的错误 | 500 Internal Server Error |
+
+### Business Contract Exception
+
+业务系统 HTTP 返回合同校验允许一个窄例外：`BusinessContractError`。
+
+- 必须继承 `ValueError`，保持路由层和调用方的参数/合同错误语义。
+- 只能用于业务接口响应形状校验，例如缺少必填字段、字段类型异常、非对象 JSON、风控命中规则或毛利链路格式异常。
+- 可携带 `diagnostic_code`、`missing_fields`、`invalid_fields` 等结构化诊断字段。
+- 诊断字段只能包含字段名、合同类型标签和稳定错误码，不能包含真实 payload 值、密钥、URL、账号、手机号、证件号或堆栈细节。
+- 非合同错误（网络、鉴权、运行时异常）不得通过该异常向前端暴露原始异常内容。
 
 **示例**：
 

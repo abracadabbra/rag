@@ -73,7 +73,8 @@ const currentSceneClass = computed(() => {
   --accent-dim: var(--accent-risk-dim);
   --glow: var(--glow-risk);
 
-  --font-display: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-display: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
   --font-body: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Sans CJK SC', 'Microsoft YaHei', sans-serif;
 }
 
@@ -166,6 +167,8 @@ a {
   margin-top: auto;
   position: relative;
   z-index: 1;
+  font-family: var(--font-mono);
+  letter-spacing: 0.02em;
 }
 
 .app-footer .divider {
@@ -182,33 +185,36 @@ a {
   color: var(--accent-risk);
 }
 
-.fade-enter-active,
+.fade-enter-active {
+  transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
 .fade-leave-active {
   transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .fade-enter-from {
   opacity: 0;
-  transform: translateY(8px);
+  transform: translateY(12px);
 }
 
 .fade-leave-to {
   opacity: 0;
-  transform: translateY(-8px);
+  transform: translateY(-6px);
 }
 
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 5px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 ::selection {

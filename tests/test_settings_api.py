@@ -14,9 +14,35 @@ client = TestClient(app)
 @pytest.fixture(autouse=True)
 def mock_settings_service(tmp_path):
     """隔离 settings 服务，使用临时 .env 文件"""
+    from api.config import settings
+
     env_file = tmp_path / ".env"
+    business_fields = [
+        "enable_business_tools",
+        "business_tool_timeout",
+        "enable_business_tool_llm_intent",
+        "business_tool_llm_intent_min_confidence",
+        "enable_business_tool_access_control",
+        "business_tool_access_token",
+        "business_tool_read_token",
+        "business_tool_execute_token",
+        "enable_business_tool_audit_file",
+        "business_tool_audit_file",
+        "risk_api_base_url",
+        "risk_api_key",
+        "profit_api_base_url",
+        "profit_api_key",
+    ]
+    original_values = {field: getattr(settings, field) for field in business_fields}
     with patch("api.services.settings_service.ENV_FILE", env_file):
         yield env_file
+    for field, value in original_values.items():
+        setattr(settings, field, value)
+    from api.services.business_clients import reset_business_clients
+    from api.services.tool_service import reset_tool_service
+
+    reset_business_clients()
+    reset_tool_service()
 
 
 class TestGetSettings:
@@ -98,6 +124,62 @@ class TestPatchSettings:
             json={"openai_max_tokens": 4096},
         )
         assert response.status_code == 200
+
+    def test_business_tool_llm_intent_settings_valid(self):
+        response = client.patch(
+            "/api/v1/settings/",
+            json={
+                "enable_business_tools": True,
+                "business_tool_timeout": 8,
+                "risk_api_base_url": "https://risk.example.test",
+                "risk_api_key": "risk-secret",
+                "profit_api_base_url": "https://profit.example.test",
+                "profit_api_key": "profit-secret",
+                "enable_business_tool_llm_intent": True,
+                "business_tool_llm_intent_min_confidence": 0.82,
+                "enable_business_tool_access_control": True,
+                "business_tool_access_token": "business-access-secret",
+                "business_tool_read_token": "business-read-secret",
+                "business_tool_execute_token": "business-execute-secret",
+                "enable_business_tool_audit_file": True,
+                "business_tool_audit_file": "logs/business_tool_audit.jsonl",
+            },
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert set(data["updated"]) == {
+            "enable_business_tools",
+            "business_tool_timeout",
+            "risk_api_base_url",
+            "risk_api_key",
+            "profit_api_base_url",
+            "profit_api_key",
+            "enable_business_tool_llm_intent",
+            "business_tool_llm_intent_min_confidence",
+            "enable_business_tool_access_control",
+            "business_tool_access_token",
+            "business_tool_read_token",
+            "business_tool_execute_token",
+            "enable_business_tool_audit_file",
+            "business_tool_audit_file",
+        }
+
+    def test_business_tool_timeout_validation(self):
+        response = client.patch(
+            "/api/v1/settings/",
+            json={"business_tool_timeout": 0},
+        )
+
+        assert response.status_code == 422
+
+    def test_business_tool_llm_intent_threshold_validation(self):
+        response = client.patch(
+            "/api/v1/settings/",
+            json={"business_tool_llm_intent_min_confidence": 1.5},
+        )
+
+        assert response.status_code == 422
 
     def test_update_multiple_fields(self):
         response = client.patch(

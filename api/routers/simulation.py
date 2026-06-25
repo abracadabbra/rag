@@ -6,6 +6,7 @@ import uuid
 import logging
 
 from fastapi import APIRouter, HTTPException
+from starlette.concurrency import run_in_threadpool
 
 from api.models import QueryRequest, QueryResponse, ErrorResponse
 
@@ -41,13 +42,16 @@ async def query_simulation(request: QueryRequest):
 
         agent = get_conversation_agent()
 
-        result = agent.process(
+        result = await run_in_threadpool(
+            agent.process,
             query=request.query,
             session_id=request.session_id,
             scene_type="simulation",
             top_k=request.top_k,
             score_threshold=request.score_threshold,
-            clarification_choice=request.clarification_choice
+            clarification_choice=request.clarification_choice,
+            use_rerank=request.use_rerank,
+            use_bm25=request.use_bm25,
         )
 
         elapsed_ms = int((time.time() - start_time) * 1000)
@@ -63,7 +67,10 @@ async def query_simulation(request: QueryRequest):
             retrieved_count=result["retrieved_count"],
             session_id=result["session_id"],
             needs_clarification=result.get("needs_clarification", False),
-            clarification_options=result.get("clarification_options", [])
+            clarification_options=result.get("clarification_options", []),
+            retrieval_metadata=result.get("retrieval_metadata"),
+            tool_calls=result.get("tool_calls", []),
+            tool_intent=result.get("tool_intent"),
         )
 
     except ConnectionError as e:

@@ -11,20 +11,15 @@ from types import ModuleType, SimpleNamespace
 import pytest
 
 
-class FakeCollection:
-    def __init__(self, name, tracker):
-        self.name = name
+class FakeMilvusClient:
+    def __init__(self, tracker):
         self.tracker = tracker
         self.insert_calls = []
-        self.flush_calls = 0
 
-    def insert(self, rows):
-        self.insert_calls.append(rows)
+    def insert(self, **kwargs):
+        self.insert_calls.append(kwargs)
         if self.tracker.insert_error is not None:
             raise self.tracker.insert_error
-
-    def flush(self):
-        self.flush_calls += 1
 
 
 def load_ingest_module(
@@ -42,7 +37,7 @@ def load_ingest_module(
         load_calls=[],
         split_calls=[],
         embed_calls=[],
-        collection=None,
+        client=None,
         insert_error=insert_error,
     )
 
@@ -57,33 +52,41 @@ def load_ingest_module(
     fake_click.option = passthrough_decorator
     fake_click.Choice = lambda values: values
 
-    def fake_connect(**kwargs):
-        tracker.connect_calls.append(kwargs)
-
-    fake_pymilvus = ModuleType("pymilvus")
-    fake_pymilvus.connections = SimpleNamespace(connect=fake_connect)
-
-    def collection_factory(name):
-        collection = FakeCollection(name, tracker)
-        tracker.collection = collection
-        return collection
-
-    fake_pymilvus.Collection = collection_factory
-
+    fake_ingestion = ModuleType("ingestion")
+    fake_ingestion.__path__ = []
     fake_loaders = ModuleType("ingestion.loaders")
+    fake_loaders.load_document = lambda path: {"content": str(path), "metadata": {"source": str(path)}}
     fake_loaders.load_documents = lambda paths: tracker.load_calls.append(paths) or list(loaded_documents or [])
 
     fake_splitters = ModuleType("ingestion.splitters")
+    fake_splitters.split_text = lambda text: [text]
     fake_splitters.split_documents = lambda docs: tracker.split_calls.append(docs) or list(split_chunks or [])
 
     fake_embeddings = ModuleType("ingestion.embeddings")
     fake_embeddings.embed_documents = lambda texts: tracker.embed_calls.append(texts) or list(embeddings or [])
+    fake_embeddings.embed_query = lambda text: [0.1, 0.2]
+
+    class FakeEmbeddingGenerator:
+        def embed_query(self, text):
+            return [0.1, 0.2]
+
+    fake_embeddings.get_embedding_generator = lambda: FakeEmbeddingGenerator()
+
+    fake_milvus_client = ModuleType("ingestion.milvus_client")
+
+    def fake_get_milvus_client(**kwargs):
+        tracker.connect_calls.append(kwargs)
+        tracker.client = FakeMilvusClient(tracker)
+        return tracker.client
+
+    fake_milvus_client.get_milvus_client = fake_get_milvus_client
 
     monkeypatch.setitem(sys.modules, "click", fake_click)
-    monkeypatch.setitem(sys.modules, "pymilvus", fake_pymilvus)
+    monkeypatch.setitem(sys.modules, "ingestion", fake_ingestion)
     monkeypatch.setitem(sys.modules, "ingestion.loaders", fake_loaders)
     monkeypatch.setitem(sys.modules, "ingestion.splitters", fake_splitters)
     monkeypatch.setitem(sys.modules, "ingestion.embeddings", fake_embeddings)
+    monkeypatch.setitem(sys.modules, "ingestion.milvus_client", fake_milvus_client)
 
     module_path = Path(__file__).resolve().parents[1] / "ingestion" / "ingest.py"
     spec = importlib.util.spec_from_file_location("test_ingestion_ingest", module_path)
@@ -114,12 +117,11 @@ def test_ingest_directory_dry_run_skips_embedding_and_insert(monkeypatch, tmp_pa
     )
 
     assert stats == {"success": 1, "failed": 0, "skipped": 0}
-    assert tracker.connect_calls[0]["alias"] == "default"
+    assert tracker.connect_calls[0]["collection_name"] == "test_collection"
     assert tracker.load_calls[0] == [str(source_dir / "R001.md")]
     assert tracker.split_calls[0][0]["metadata"]["scene_type"] == "risk_rule"
     assert tracker.embed_calls == []
-    assert tracker.collection.insert_calls == []
-    assert tracker.collection.flush_calls == 0
+    assert tracker.client.insert_calls == []
 
 
 def test_ingest_directory_full_flow_inserts_vectors(monkeypatch, tmp_path):
@@ -152,13 +154,17 @@ def test_ingest_directory_full_flow_inserts_vectors(monkeypatch, tmp_path):
 
     assert stats == {"success": 2, "failed": 0, "skipped": 0}
     assert tracker.embed_calls == [["chunk-1", "chunk-2"]]
-    assert len(tracker.collection.insert_calls) == 1
-    inserted = tracker.collection.insert_calls[0]
-    assert inserted[1] == embeddings
-    assert inserted[2] == ["risk_rule", "risk_rule"]
-    assert inserted[3] == ["chunk-1", "chunk-2"]
-    assert inserted[4] == [chunk["metadata"] for chunk in split_chunks]
-    assert tracker.collection.flush_calls == 1
+    assert len(tracker.client.insert_calls) == 1
+    insert_call = tracker.client.insert_calls[0]
+    assert insert_call["collection_name"] == "test_collection"
+    inserted = insert_call["data"]
+    assert [row["vector"] for row in inserted] == embeddings
+    assert [row["scene_type"] for row in inserted] == ["risk_rule", "risk_rule"]
+    assert [row["content"] for row in inserted] == ["chunk-1", "chunk-2"]
+    assert [row["metadata"] for row in inserted] == [
+        '{"source": "' + str(source_dir / "R001.md") + '", "chunk_index": 0}',
+        '{"source": "' + str(source_dir / "R002.txt") + '", "chunk_index": 1}',
+    ]
 
 
 def test_ingest_directory_returns_zero_when_no_supported_files(monkeypatch, tmp_path):
@@ -217,4 +223,4 @@ def test_insert_to_milvus_returns_failed_stats_when_batch_insert_fails(monkeypat
     )
 
     assert stats == {"success": 0, "failed": 1, "skipped": 0}
-    assert len(tracker.collection.insert_calls) == 1
+    assert len(tracker.client.insert_calls) == 1

@@ -2,10 +2,12 @@
 健康检查路由
 """
 
-from fastapi import APIRouter, status
-from datetime import datetime
-from api.config import settings
 import logging
+from datetime import datetime, timezone
+
+from fastapi import APIRouter, status
+
+from api.config import settings
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -35,10 +37,25 @@ async def health_check():
 
     return {
         "status": overall_status,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "version": settings.app_version,
         "environment": settings.environment,
         "checks": checks
+    }
+
+
+@router.get("/ready")
+async def ready_check():
+    """
+    轻量就绪检查
+
+    仅确认 API 进程可响应，避免前端连接状态被外部依赖健康检查拖慢。
+    """
+    return {
+        "status": "ready",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "version": settings.app_version,
+        "environment": settings.environment,
     }
 
 
@@ -53,8 +70,17 @@ async def _check_milvus() -> dict:
             port=settings.milvus_port
         )
 
-        # 检查 Collection 是否存在
         has_collection = utility.has_collection(settings.milvus_collection)
+
+        doc_count = 0
+        if has_collection:
+            try:
+                from pymilvus import Collection
+                col = Collection(settings.milvus_collection, using="health_check")
+                col.flush()
+                doc_count = col.num_entities
+            except Exception:
+                pass
 
         connections.disconnect("health_check")
 
@@ -62,7 +88,8 @@ async def _check_milvus() -> dict:
             "status": "healthy",
             "host": settings.milvus_host,
             "port": settings.milvus_port,
-            "collection_exists": has_collection
+            "collection_exists": has_collection,
+            "document_count": doc_count
         }
     except Exception as e:
         logger.error(f"Milvus 健康检查失败: {e}")
